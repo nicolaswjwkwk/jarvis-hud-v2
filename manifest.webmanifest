@@ -1,0 +1,22 @@
+{
+  "name": "J.A.R.V.I.S. HUD — Superagente",
+  "short_name": "JARVIS",
+  "description": "Interface HUD de superagente: backend de modelos, voz, agente de código, automações, WhatsApp e painel do administrador.",
+  "id": "jarvis-hud-v2",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#060b10",
+  "theme_color": "#060b10",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }
+  ]
+}

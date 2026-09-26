@@ -1,0 +1,122 @@
+/* =========================================================
+   JARVIS X — REFINED UI OVERLAY (v3.1)
+   Camada de refinamento visual: vidro mais limpo, tipografia
+   elegante, micro-interações e foco acessível.
+   Carregada depois do CSS base para sobrescrever.
+   ========================================================= */
+
+:root {
+  --r-line: rgba(148, 178, 230, 0.10);
+  --r-line-strong: rgba(108, 224, 255, 0.22);
+  --r-glass: rgba(10, 14, 24, 0.62);
+  --r-glass-hi: rgba(18, 25, 40, 0.82);
+  --r-blur: saturate(150%) blur(18px);
+  --r-radius: 16px;
+  --r-radius-sm: 10px;
+  --r-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --r-glow: 0 0 0 1px rgba(105, 232, 255, 0.08), 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+/* Painéis: vidro mais limpo e borda fina uniforme */
+#app main, #app aside, #app section,
+.panel, .card, .module, [class*="panel"], [class*="card"] {
+  background: var(--r-glass) !important;
+  -webkit-backdrop-filter: var(--r-blur);
+  backdrop-filter: var(--r-blur);
+  border: 1px solid var(--r-line) !important;
+  border-radius: var(--r-radius) !important;
+  box-shadow: var(--r-glow) !important;
+  transition: border-color 0.35s var(--r-ease), box-shadow 0.35s var(--r-ease);
+}
+
+/* Realce discreto ao passar o mouse */
+#app main:hover, #app aside:hover, .panel:hover, .card:hover, .module:hover {
+  border-color: var(--r-line-strong) !important;
+  box-shadow: var(--r-glow), 0 0 24px rgba(105, 232, 255, 0.06) !important;
+}
+
+/* Tipografia: hierarquia e respiro */
+body, input, textarea, select, button {
+  letter-spacing: 0.01em;
+}
+h1, h2, h3, .title, [class*="title"] {
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+p, li, .muted, [class*="muted"] {
+  line-height: 1.55;
+}
+
+/* Botões e campos: toque premium */
+button, .btn, [class*="btn"], [type="submit"] {
+  border-radius: var(--r-radius-sm) !important;
+  transition: transform 0.18s var(--r-ease), filter 0.18s var(--r-ease),
+    box-shadow 0.18s var(--r-ease) !important;
+}
+button:hover, .btn:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+}
+button:active, .btn:active {
+  transform: scale(0.975);
+}
+input, textarea, select, .input, [class*="input"], [class*="field"] {
+  border-radius: var(--r-radius-sm) !important;
+  border: 1px solid var(--r-line) !important;
+  background: rgba(8, 11, 20, 0.55) !important;
+  transition: border-color 0.25s var(--r-ease), box-shadow 0.25s var(--r-ease);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: var(--r-line-strong) !important;
+  box-shadow: 0 0 0 3px rgba(105, 232, 255, 0.10) !important;
+}
+
+/* Foco visível para acessibilidade em elementos interativos */
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid rgba(105, 232, 255, 0.55) !important;
+  outline-offset: 2px;
+}
+
+/* Scrollbar discreta e suave */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 170, 210, 0.14);
+  border-radius: 24px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(150, 170, 210, 0.26); }
+* { scrollbar-width: thin; scrollbar-color: rgba(150,170,210,0.18) transparent; }
+
+/* Animações: aparecimento elegante */
+@keyframes r-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+#app main, #app aside, .panel, .card, .module {
+  animation: r-rise 0.5s var(--r-ease) both;
+}
+
+/* Mensagens de chat: bolhas limpas com separação clara */
+.msg, .message, [class*="msg"], [class*="message"] {
+  border-radius: 14px !important;
+  border: 1px solid var(--r-line);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* Texto selecionado na paleta do tema */
+::selection {
+  background: rgba(105, 232, 255, 0.22);
+}
+
+/* Respeita usuários sensíveis a movimento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Responsivo: arredondamento menor em telas pequenas */
+@media (max-width: 640px) {
+  :root { --r-radius: 12px; --r-radius-sm: 8px; }
+}

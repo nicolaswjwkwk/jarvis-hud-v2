@@ -1,0 +1,16 @@
+{
+  "name": "JARVIS X — AI Command Center",
+  "short_name": "JARVIS X",
+  "description": "Assistente pessoal com IA real, voz, skills e comandos.",
+  "start_url": "./jarvis-x.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#04060b",
+  "theme_color": "#05070d",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

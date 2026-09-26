@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>JARVIS X — Login</title>
+  <style>
+    :root {
+      --bg: #04070d;
+      --panel: rgba(12, 18, 30, 0.82);
+      --panel-strong: rgba(14, 22, 38, 0.96);
+      --line: rgba(155, 173, 220, 0.18);
+      --cyan: #6fe8ff;
+      --blue: #6f8bff;
+      --green: #64f4ad;
+      --text: #edf6ff;
+      --muted: #95a4bf;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; min-height: 100%; background: radial-gradient(circle at top, rgba(107, 149, 255, 0.18), transparent 40%), linear-gradient(180deg, #050a12 0%, #02060c 100%);
+      color: var(--text); font-family: Inter, system-ui, sans-serif;
+    }
+    body {
+      min-height: 100vh; display: grid; place-items: center; padding: 22px;
+    }
+    .shell {
+      width: min(100%, 980px); display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 22px;
+    }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 40px 90px rgba(0,0,0,.45);
+      backdrop-filter: blur(22px);
+    }
+    .hero {
+      padding: 26px 22px; display: flex; flex-direction: column; min-height: 620px; position: relative; overflow: hidden;
+    }
+    .hero:before {
+      content: ''; position: absolute; inset: 0; background:
+        radial-gradient(circle at 15% 10%, rgba(111, 184, 255, 0.18), transparent 22%),
+        radial-gradient(circle at 85% 20%, rgba(146, 122, 255, 0.16), transparent 23%),
+        radial-gradient(circle at 70% 65%, rgba(111, 232, 255, 0.14), transparent 25%);
+      pointer-events: none;
+    }
+    .badge {
+      width: fit-content; border: 1px solid rgba(111,232,255,.22); background: rgba(111,232,255,.06); color: var(--cyan);
+      padding: 7px 12px; border-radius: 999px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px; margin-top: 18px; position: relative; z-index: 1;
+    }
+    .orb {
+      width: 44px; height: 44px; border-radius: 14px; position: relative; background: radial-gradient(circle at 50% 42%, #fff 0 5%, #9aeaff 10% 22%, #6f8bff 38%, rgba(111, 139, 255, 0.18) 70%, transparent 100%);
+      box-shadow: 0 0 28px rgba(111,232,255,.25);
+    }
+    .orb:after {
+      content: ''; position: absolute; inset: -7px; border: 1px solid rgba(111,232,255,.19); border-radius: 18px; animation: spin 12s linear infinite;
+    }
+    .brand strong { font-size: 26px; letter-spacing: .12em; }
+    .brand small { display: block; font-size: 10px; letter-spacing: .22em; color: var(--muted); }
+    .hero-copy {
+      margin-top: 44px; position: relative; z-index: 1; max-width: 480px;
+    }
+    .hero-copy h1 {
+      margin: 0; font-size: clamp(2.6rem, 4vw, 4.1rem); line-height: 0.96; letter-spacing: -0.06em;
+    }
+    .hero-copy p {
+      margin-top: 14px; color: var(--muted); line-height: 1.7; font-size: 15px;
+    }
+    .feature-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(170px, 1fr)); gap: 12px; margin-top: auto; position: relative; z-index: 1;
+    }
+    .feature {
+      padding: 14px 16px; background: rgba(255,255,255,.02); border: 1px solid rgba(111,139,255,.12); border-radius: 16px;
+    }
+    .feature small { display: block; color: var(--muted); margin-top: 5px; }
+    .feature strong { font-size: 14px; }
+
+    .auth {
+      padding: 28px 22px; background: var(--panel-strong);
+    }
+    .auth-head {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .auth-head h2 { margin: 0; font-size: 24px; }
+    .status {
+      border: 1px solid rgba(100,244,173,.25); background: rgba(100,244,173,.08); color: #bdf7dc; padding: 6px 10px; border-radius: 999px;
+      font-size: 9px; letter-spacing: .17em; text-transform: uppercase;
+    }
+    .tabbar {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px;
+    }
+    .tab {
+      border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 12px; padding: 10px 12px; cursor: pointer; font-weight: 600;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, rgba(111,232,255,.12), rgba(111,139,255,.12)); border-color: rgba(111,232,255,.28); color: var(--text);
+    }
+    .form {
+      display: none; gap: 12px;
+    }
+    .form.active { display: grid; }
+    label {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px;
+    }
+    input, button, select {
+      width: 100%; border-radius: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.02); color: var(--text); outline: none;
+      padding: 14px 14px; font-size: 15px;
+    }
+    input:focus { border-color: rgba(111,232,255,.45); box-shadow: 0 0 0 4px rgba(111,232,255,.08); }
+    button.primary {
+      border: 0; background: linear-gradient(135deg, var(--cyan), var(--blue)); color: #071119; font-weight: 800; cursor: pointer;
+      box-shadow: 0 20px 28px rgba(111,232,255,.18);
+    }
+    button.secondary {
+      background: rgba(255,255,255,.02); color: var(--text); border: 1px solid var(--line); cursor: pointer;
+    }
+    .divider {
+      display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; margin: 18px 0 14px;
+    }
+    .divider:before, .divider:after {
+      content: ''; flex: 1; height: 1px; background: var(--line);
+    }
+    .social {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .muted {
+      color: var(--muted); font-size: 12px; line-height: 1.6;
+    }
+    .inline {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .small-btn {
+      width: auto; min-width: 116px; padding: 12px 10px; font-size: 12px; border-radius: 12px; cursor: pointer;
+    }
+    .hidden { display: none; }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    @media (max-width: 820px) {
+      .shell { grid-template-columns: 1fr; }
+      .hero { min-height: 290px; }
+    }
+  </style>
+<link rel="stylesheet" href="css/refined.css" />
+</head>
+<body>
+  <div class="shell">
+    <section class="panel hero">
+      <div class="badge">J.A.R.V.I.S. X</div>
+      <div class="brand">
+        <div class="orb"></div>
+        <div>
+          <strong>JARVIS</strong>
+          <small>AI COMMAND CENTER</small>
+        </div>
+      </div>
+      <div class="hero-copy">
+        <h1>Seu<br />superagente.</h1>
+        <p>Assistente pessoal em tempo real, com voz, memória local, automações, conexões, WhatsApp e navegação de IA privada pronta para mobile e desktop.</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature">
+          <strong>Google Login</strong>
+          <small>conta segura e sessão server-side</small>
+        </div>
+        <div class="feature">
+          <strong>OTP Telefone</strong>
+          <small>acesso por código temporário</small>
+        </div>
+        <div class="feature">
+          <strong>WhatsApp</strong>
+          <small>Cloud + Evolution fallback</small>
+        </div>
+        <div class="feature">
+          <strong>Roda local</strong>
+          <small>Ollama / OpenRouter / modelo local</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel auth">
+      <div class="auth-head">
+        <h2>Entrar</h2>
+        <div class="status" id="statusBadge">ONLINE</div>
+      </div>
+
+      <div class="tabbar">
+        <button class="tab active" type="button" data-tab="google">Google</button>
+        <button class="tab" type="button" data-tab="phone">Telefone</button>
+      </div>
+
+      <div class="form active" id="form-google">
+        <div>
+          <label>Conta Google</label>
+          <button class="primary" type="button" id="googleBtn">Entrar com Google</button>
+        </div>
+        <div class="divider">ou</div>
+        <div class="social">
+          <button class="secondary" type="button" onclick="window.location.href='http://localhost:8080'">Continuar local</button>
+          <button class="secondary" type="button" id="statusBtn">Status backend</button>
+        </div>
+      </div>
+
+      <div class="form" id="form-phone">
+        <div>
+          <label>Celular</label>
+          <input id="phoneInput" placeholder="+55 11 99999-9999" />
+        </div>
+        <div class="inline">
+          <button class="primary" type="button" id="sendOtpBtn">Enviar código</button>
+        </div>
+        <div id="otpBlock" class="hidden">
+          <label>Código recebido</label>
+          <input id="otpInput" placeholder="123456" maxlength="6" />
+          <div style="margin-top: 10px;">
+            <button class="primary" type="button" id="verifyOtpBtn">Confirmar</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <div class="muted" id="messageBox">Conecte a conta para ativar seu agente.</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const statusBox = document.getElementById('messageBox');
+    const statusBadge = document.getElementById('statusBadge');
+    const phoneInput = document.getElementById('phoneInput');
+    const otpBlock = document.getElementById('otpBlock');
+
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        document.getElementById('form-google').classList.toggle('active', tab.dataset.tab === 'google');
+        document.getElementById('form-phone').classList.toggle('active', tab.dataset.tab === 'phone');
+      });
+    });
+
+    async function checkStatus() {
+      try {
+        const response = await fetch('http://localhost:8080/health');
+        const data = await response.json();
+        statusBadge.textContent = data.ok ? 'ONLINE' : 'OFFLINE';
+        statusBox.textContent = data.ok ? 'Backend online e pronto para autenticação.' : 'Backend indisponível.';
+      } catch (error) {
+        statusBadge.textContent = 'OFFLINE';
+        statusBox.textContent = 'Backend offline. inicie o servidor em http://localhost:8080';
+      }
+    }
+
+    async function startGoogleLogin() {
+      try {
+        const response = await fetch('http://localhost:8080/auth/google/start', { method: 'POST' });
+        const data = await response.json();
+        if (!data.ok || !data.url) throw new Error('Google auth unavailable');
+        window.location.href = data.url;
+      } catch (error) {
+        statusBox.textContent = 'Google OAuth não está configurado no backend.';
+      }
+    }
+
+    async function sendOtp() {
+      const phone = phoneInput.value.trim();
+      if (!phone) {
+        statusBox.textContent = 'Informe o número de telefone.';
+        return;
+      }
+      try {
+        const response = await fetch('http://localhost:8080/auth/phone/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Erro no envio do OTP');
+        otpBlock.classList.remove('hidden');
+        statusBox.textContent = 'Código enviado. Use o código recebido para confirmar.';
+      } catch (error) {
+        statusBox.textContent = error.message || 'Falha ao enviar OTP.';
+      }
+    }
+
+    async function verifyOtp() {
+      const phone = phoneInput.value.trim();
+      const code = document.getElementById('otpInput').value.trim();
+      try {
+        const response = await fetch('http://localhost:8080/auth/phone/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, code })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Erro ao validar OTP');
+        statusBox.textContent = 'Autenticação por telefone concluída.';
+        localStorage.setItem('jarvis_session_token', data.token || '');
+      } catch (error) {
+        statusBox.textContent = error.message || 'Código inválido.';
+      }
+    }
+
+    document.getElementById('googleBtn').addEventListener('click', startGoogleLogin);
+    document.getElementById('statusBtn').addEventListener('click', checkStatus);
+    document.getElementById('sendOtpBtn').addEventListener('click', sendOtp);
+    document.getElementById('verifyOtpBtn').addEventListener('click', verifyOtp);
+
+    checkStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#060b14" />
+  <title>JARVIS X · Superagente</title>
+  <style>
+    :root{
+      --bg:#060b14;
+      --bg2:#0c1420;
+      --panel:#111b2b;
+      --panel-2:#0c1320;
+      --line:rgba(255,255,255,.09);
+      --text:#ebf3ff;
+      --muted:#9aa8bf;
+      --cyan:#72ebff;
+      --violet:#8f7dff;
+      --green:#66f4b0;
+      --amber:#f7d67a;
+      --red:#ff7b93;
+      --shadow:0 28px 80px rgba(0,0,0,.38);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family:Inter,Segoe UI,system-ui,sans-serif;background:radial-gradient(circle at top, rgba(114,235,255,.16), transparent 28%),radial-gradient(circle at bottom right, rgba(143,125,255,.14), transparent 40%),var(--bg);color:var(--text)}
+    body{overflow:hidden}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    .sidebar{
+      background:rgba(7,12,19,.8);backdrop-filter:blur(18px);border-right:1px solid var(--line);
+      padding:18px 14px 12px;display:flex;flex-direction:column;gap:14px
+    }
+    .brand{display:flex;align-items:center;gap:12px;padding:8px 6px 12px;border-bottom:1px solid var(--line)}
+    .orb{
+      width:38px;height:38px;border-radius:14px;position:relative;overflow:hidden;
+      background:radial-gradient(circle at 35% 35%, #fff 0 12%, var(--cyan) 15%, var(--violet) 48%, transparent 70%),
+      conic-gradient(from 120deg, var(--cyan), var(--violet), #18213d, var(--cyan));
+      box-shadow:0 0 30px rgba(114,235,255,.4)
+    }
+    .brand strong{display:block;letter-spacing:.28em;font-size:13px}
+    .brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.22em;margin-top:2px}
+    .new-btn{
+      border:1px solid rgba(114,235,255,.35);background:linear-gradient(135deg,rgba(114,235,255,.12),rgba(143,125,255,.12));
+      color:var(--text);border-radius:16px;padding:12px 14px;font-weight:700;display:flex;justify-content:center;gap:8px
+    }
+    .nav{display:flex;flex-direction:column;gap:6px}
+    .nav button{
+      width:100%;text-align:left;padding:11px 12px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--muted);display:flex;align-items:center;gap:10px
+    }
+    .nav button.active,.nav button:hover{
+      background:rgba(114,235,255,.08);border-color:rgba(114,235,255,.18);color:var(--text)
+    }
+    .nav .symbol{width:20px;text-align:center;font-size:16px}
+    .nav .badge{margin-left:auto;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px;padding:3px 6px;font-size:9px;color:#d6e1f6}
+    .history{flex:1;min-height:0;overflow:auto;padding:3px 0}
+    .history-title{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:#6d7d98;padding:8px 10px}
+    .history-item{
+      padding:10px 12px;border-radius:12px;color:#a7b6d3;cursor:pointer;border:1px solid transparent
+    }
+    .history-item:hover{background:rgba(255,255,255,.02);border-color:var(--line)}
+    .profile{
+      display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)
+    }
+    .avatar{
+      width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#2f3d60,#171d2d);display:grid;place-items:center;
+      border:1px solid rgba(143,125,255,.3)
+    }
+    .profile strong{display:block;font-size:12px}.profile small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+    .main{display:flex;flex-direction:column;min-width:0}
+    .topbar{
+      height:70px;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--line);
+      background:rgba(8,12,18,.48);backdrop-filter:blur(14px)
+    }
+    .topbar h1{margin:0;font-size:14px;letter-spacing:.12em;text-transform:uppercase}
+    .topbar small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+    .status{padding:7px 10px;border-radius:999px;border:1px solid rgba(102,244,176,.25);background:rgba(102,244,176,.08);color:var(--green);font-size:9px;letter-spacing:.15em;text-transform:uppercase}
+    .content{flex:1;min-height:0;padding:22px;overflow:auto}
+    .view{display:none}.view.active{display:block}
+    .hero-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}
+    .card{
+      background:linear-gradient(180deg, rgba(17,27,43,.86), rgba(8,14,22,.9));border:1px solid var(--line);border-radius:var(--radius);
+      box-shadow:var(--shadow);padding:22px;position:relative;overflow:hidden
+    }
+    .card:before{
+      content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(114,235,255,.02),transparent 30%,rgba(143,125,255,.04));pointer-events:none
+    }
+    .eyebrow{font-size:10px;color:var(--cyan);letter-spacing:.22em;text-transform:uppercase}
+    h2{font-size:clamp(32px,5vw,66px);line-height:.95;letter-spacing:-.08em;margin:18px 0 12px}
+    p{color:var(--muted);line-height:1.7;margin:0}
+    .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .chip{
+      border:1px solid var(--line);background:rgba(255,255,255,.03);padding:8px 12px;border-radius:999px;color:#dfeaff;font-size:11px
+    }
+    .metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
+    .metric{
+      border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px
+    }
+    .metric small{display:block;color:var(--muted);font-size:8px;letter-spacing:.18em;text-transform:uppercase}
+    .metric strong{display:block;margin-top:8px;font-size:24px;line-height:1.1}
+    .chat-card{display:flex;flex-direction:column;min-height:420px}
+    .chat-box{
+      flex:1;min-height:220px;max-height:52vh;overflow:auto;padding:6px 0 10px;display:flex;flex-direction:column;gap:10px
+    }
+    .msg{max-width:82%;padding:12px 14px;border-radius:16px;border:1px solid var(--line);line-height:1.5;white-space:pre-wrap}
+    .msg.user{align-self:flex-end;background:rgba(143,125,255,.14);border-color:rgba(143,125,255,.24)}
+    .msg.ai{background:rgba(114,235,255,.06);border-color:rgba(114,235,255,.18)}
+    .composer{display:flex;gap:8px;margin-top:12px}
+    .composer textarea{
+      flex:1;min-height:50px;max-height:160px;resize:none;border:1px solid var(--line);border-radius:14px;background:#050c14;color:var(--text);padding:12px 14px;outline:none
+    }
+    .send-btn{
+      width:54px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#071019;font-weight:800
+    }
+    .panel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .tool-card{
+      border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02)
+    }
+    .tool-card strong{display:block;margin-bottom:6px}
+    .tool-card small{display:block;color:var(--muted)}
+    .settings-box{display:grid;gap:12px}
+    .settings-box button{
+      border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);padding:10px 12px;border-radius:12px
+    }
+    .mobilebar{display:none}
+    @media (max-width: 860px){
+      body{overflow:auto}
+      .app{grid-template-columns:1fr}
+      .sidebar{display:none}
+      .content{padding:14px 12px 90px}
+      .hero-grid{grid-template-columns:1fr}
+      .panel-grid{grid-template-columns:1fr}
+      .mobilebar{
+        display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;
+        background:rgba(8,12,18,.95);border-top:1px solid var(--line);padding:10px 8px calc(10px + env(safe-area-inset-bottom))
+      }
+      .mobilebar button{background:none;border:none;color:var(--muted);font-size:11px;padding:6px 4px}
+      .mobilebar button.active{color:var(--cyan)}
+      .msg{max-width:92%}
+    }
+  </style>
+<link rel="stylesheet" href="css/refined.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="orb"></div>
+        <div>
+          <strong>JARVIS</strong>
+          <small>SUPERAGENTE</small>
+        </div>
+      </div>
+
+      <button class="new-btn" onclick="newChat()">＋ Novo chat</button>
+
+      <nav class="nav">
+        <button class="active" data-view="home" onclick="switchView('home', this)"><span class="symbol">⌂</span> Visão geral <span class="badge">LIVE</span></button>
+        <button data-view="chat" onclick="switchView('chat', this)"><span class="symbol">◉</span> Chat</button>
+        <button data-view="skills" onclick="switchView('skills', this)"><span class="symbol">✦</span> Skills</button>
+        <button data-view="settings" onclick="switchView('settings', this)"><span class="symbol">⚙</span> Configurações</button>
+      </nav>
+
+      <div class="history">
+        <div class="history-title">Conversas</div>
+        <div class="history-item" onclick="loadDemo('Projeto de IA')">Projeto de IA</div>
+        <div class="history-item" onclick="loadDemo('Automação')">Automação</div>
+        <div class="history-item" onclick="loadDemo('Plano de lançamento')">Plano de lançamento</div>
+      </div>
+
+      <div class="profile">
+        <div class="avatar">M</div>
+        <div>
+          <strong>Master User</strong>
+          <small>acesso local</small>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1>JARVIS X</h1>
+          <small id="pageTitle">Visão geral</small>
+        </div>
+        <div class="status" id="status">LOCAL</div>
+      </header>
+
+      <section class="content">
+        <section class="view active" id="home">
+          <div class="hero-grid">
+            <div class="card">
+              <div class="eyebrow">Neural core · online</div>
+              <h2>Crie.<br>Decida.<br>Execute.</h2>
+              <p>Um superagente mobile-first para conversar, planejar, delegar e agir com segurança.</p>
+              <div class="pill-row">
+                <button class="chip" onclick="quickPrompt('Analise meu projeto e sugira melhorias')">Analisar projeto</button>
+                <button class="chip" onclick="quickPrompt('Crie um plano de automação para o meu negócio')">Planejar automação</button>
+                <button class="chip" onclick="quickPrompt('Liste as ferramentas disponíveis')">Ferramentas</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="eyebrow">Telemetria</div>
+              <div class="metrics">
+                <div class="metric"><small>Servidor</small><strong id="serverState">--</strong></div>
+                <div class="metric"><small>Modelo</small><strong id="modelState">--</strong></div>
+                <div class="metric"><small>Ferramentas</small><strong>4</strong></div>
+                <div class="metric"><small>Privacidade</small><strong>100%</strong></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="chat">
+          <div class="card chat-card">
+            <div class="eyebrow">Consulta · ferramenta · modelo</div>
+            <div class="chat-box" id="messages">
+              <div class="msg ai">Olá. Sou o JARVIS. Como posso ajudar?</div>
+            </div>
+
+            <div class="composer">
+              <textarea id="prompt" placeholder="Fale com o JARVIS…" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMessage();}"></textarea>
+              <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="skills">
+          <div class="card">
+            <div class="eyebrow">Skill registry</div>
+            <div class="panel-grid">
+              <div class="tool-card"><strong>🌐 Web search</strong><small>Pesquisa e resumo de páginas.</small></div>
+              <div class="tool-card"><strong>🧠 Memória</strong><small>Contexto persistente por sessão.</small></div>
+              <div class="tool-card"><strong>⚡ Planner</strong><small>Cria planos, etapas e priorização.</small></div>
+              <div class="tool-card"><strong>💬 WhatsApp</strong><small>Envio e recebimento de mensagens.</small></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="settings">
+          <div class="card">
+            <div class="eyebrow">Configurações</div>
+            <div class="settings-box">
+              <button onclick="JARVIS_Backend.googleStart()">Entrar com Google</button>
+              <button onclick="phoneLogin()">Login por telefone</button>
+              <button onclick="JARVIS_Backend.logout()">Sair</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="mobilebar">
+    <button class="active" data-mob="home" onclick="switchView('home')">⌂<br>Início</button>
+    <button data-mob="chat" onclick="switchView('chat')">◉<br>Chat</button>
+    <button data-mob="skills" onclick="switchView('skills')">✦<br>Skills</button>
+    <button data-mob="settings" onclick="switchView('settings')">⚙<br>Ajustes</button>
+  </div>
+
+  <script src="./js/backend-bridge.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function switchView(view, el) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+      document.getElementById(view).classList.add('active');
+      document.querySelectorAll('[data-view]').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+      document.querySelectorAll('[data-mob]').forEach(btn => btn.classList.toggle('active', btn.dataset.mob === view));
+      document.getElementById('pageTitle').textContent = {
+        home: 'Visão geral',
+        chat: 'Central de chat',
+        skills: 'Skills',
+        settings: 'Configurações'
+      }[view];
+    }
+
+    function loadDemo(text) {
+      const msg = document.createElement('div');
+      msg.className = 'msg ai';
+      msg.textContent = text;
+      document.getElementById('messages').appendChild(msg);
+    }
+
+    function newChat() {
+      document.getElementById('messages').innerHTML = '<div class=\"msg ai\">Nova conversa iniciada. Como posso ajudar?</div>';
+      switchView('chat');
+    }
+
+    function quickPrompt(text) {
+      const prompt = document.getElementById('prompt');
+      prompt.value = text;
+      switchView('chat');
+      setTimeout(() => prompt.focus(), 50);
+    }
+
+    function addMessage(role, text) {
+      const box = document.createElement('div');
+      box.className = 'msg ' + role;
+      box.textContent = text;
+      document.getElementById('messages').appendChild(box);
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    }
+
+    async function sendMessage() {
+      const prompt = document.getElementById('prompt');
+      const text = prompt.value.trim();
+      if (!text) return;
+      prompt.value = '';
+      addMessage('user', text);
+
+      try {
+        const data = await JARVIS_Backend.sendChat([{ role: 'user', content: text }], 'Você é JARVIS, assistente pessoal, local-first e seguro.');
+        const answer = data.choices?.[0]?.message?.content || 'Resposta indisponível.';
+        addMessage('ai', answer);
+      } catch (err) {
+        addMessage('ai', 'Backend indisponível. Inicie o servidor em http://localhost:8080.');
+      }
+    }
+
+    async function phoneLogin() {
+      const phone = prompt('Digite o telefone com DDI:');
+      if (!phone) return;
+      try {
+        const r = await JARVIS_Backend.phoneRequest(phone);
+        const code = prompt('Digite o código OTP recebido:');
+        if (code) {
+          const ok = await JARVIS_Backend.phoneVerify(phone, code);
+          if (ok && ok.session_token) {
+            alert('Login por telefone realizado.');
+          }
+        }
+      } catch (err) {
+        alert(err.message || 'Erro no login.');
+      }
+    }
+
+    async function healthCheck() {
+      const data = await JARVIS_Backend.health();
+      const el = document.getElementById('status');
+      const serverState = document.getElementById('serverState');
+      const modelState = document.getElementById('modelState');
+
+      el.textContent = data.ok ? 'ONLINE' : 'OFFLINE';
+      serverState.textContent = data.ok ? 'ONLINE' : 'OFFLINE';
+      modelState.textContent = data.ok ? 'LOCAL' : 'OFFLINE';
+    }
+
+    healthCheck();
+    switchView('home');
+  </script>
+</body>
+</html>

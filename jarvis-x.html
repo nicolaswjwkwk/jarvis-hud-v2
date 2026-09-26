@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="description" content="JARVIS X — interface futurista de assistente pessoal com IA real (Groq/OpenRouter/Cerebras) em um único HTML">
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+<title>JARVIS X — AI Command Center</title>
+
+<style>
+/* =========================================================
+   JARVIS X — CINEMATIC UI
+   Tudo em um único HTML: CSS + interface + JavaScript.
+   ========================================================= */
+
+:root{
+  --bg:#04060b;
+  --bg2:#080b13;
+  --panel:rgba(12,16,27,.76);
+  --panel2:rgba(17,23,37,.88);
+  --panel3:rgba(25,31,48,.72);
+  --line:rgba(159,180,225,.14);
+  --line2:rgba(108,224,255,.30);
+  --text:#f2f7ff;
+  --muted:#8490a8;
+  --muted2:#5f6b83;
+  --cyan:#69e8ff;
+  --cyan2:#37bfff;
+  --blue:#637dff;
+  --violet:#a173ff;
+  --pink:#ff67b8;
+  --green:#65f6b0;
+  --amber:#ffc76a;
+  --red:#ff6f86;
+  --shadow:0 30px 100px rgba(0,0,0,.55);
+  --radius:22px;
+  --sidebar:286px;
+  --top:64px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{overflow:hidden}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:active{transform:scale(.98)}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-thumb{background:rgba(150,170,210,.18);border-radius:20px}
+::-webkit-scrollbar-track{background:transparent}
+
+#space{
+  position:fixed;inset:0;pointer-events:none;overflow:hidden;
+  background:
+    radial-gradient(900px 600px at 50% -10%,rgba(78,116,255,.13),transparent 65%),
+    radial-gradient(700px 500px at 95% 30%,rgba(153,79,255,.10),transparent 65%),
+    radial-gradient(700px 500px at 0% 80%,rgba(42,220,255,.06),transparent 65%),
+    linear-gradient(180deg,#050811 0%,#03050a 100%);
+}
+#space:before{
+  content:"";position:absolute;inset:-30%;
+  background-image:
+    radial-gradient(circle,rgba(255,255,255,.45) 0 1px,transparent 1.5px),
+    radial-gradient(circle,rgba(108,224,255,.25) 0 1px,transparent 1.5px);
+  background-size:87px 91px,131px 127px;
+  background-position:0 0,41px 23px;
+  opacity:.16;
+  animation:starDrift 90s linear infinite;
+}
+#space:after{
+  content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 4px,rgba(255,255,255,.008) 5px);
+  mix-blend-mode:screen;
+}
+.noise{
+  position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+}
+
+/* APP SHELL */
+.app{
+  position:relative;z-index:2;height:100vh;display:grid;
+  grid-template-columns:var(--sidebar) 1fr;
+}
+.sidebar{
+  height:100vh;display:flex;flex-direction:column;
+  border-right:1px solid var(--line);
+  background:rgba(4,7,13,.82);
+  backdrop-filter:blur(28px);
+  padding:15px 13px;
+  overflow:hidden;
+}
+.brand{
+  height:54px;display:flex;align-items:center;gap:11px;
+  padding:4px 9px 10px;border-bottom:1px solid var(--line);
+}
+.brand-orb{
+  width:35px;height:35px;border-radius:12px;position:relative;
+  background:radial-gradient(circle at 50% 45%,#fff 0 6%,#7cf6ff 8% 19%,#6672ff 33%,transparent 65%),conic-gradient(#6beaff,#8568ff,#151d4c,#6beaff);
+  box-shadow:0 0 25px rgba(82,226,255,.35);
+}
+.brand-orb:after{content:"";position:absolute;inset:-5px;border:1px solid rgba(105,232,255,.2);border-radius:14px;animation:spin 12s linear infinite}
+.brand strong{display:block;letter-spacing:.32em;font-size:14px}
+.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-top:2px}
+
+.new-chat{
+  margin:13px 2px 10px;width:calc(100% - 4px);height:44px;
+  border:1px solid rgba(105,232,255,.24);border-radius:14px;
+  background:linear-gradient(135deg,rgba(105,232,255,.12),rgba(99,125,255,.08));
+  color:#effcff;display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:inset 0 0 25px rgba(105,232,255,.03),0 0 30px rgba(48,177,255,.05);
+  transition:.25s var(--ease);
+}
+.new-chat:hover{border-color:rgba(105,232,255,.48);transform:translateY(-1px)}
+.side-title{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#64708a;padding:7px 11px 5px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{
+  border:1px solid transparent;background:transparent;color:#aab5ca;
+  width:100%;padding:10px 11px;border-radius:13px;display:flex;align-items:center;gap:10px;
+  text-align:left;transition:.2s var(--ease);position:relative;
+}
+.nav button:hover,.nav button.active{
+  color:#f5f8ff;background:linear-gradient(135deg,rgba(99,125,255,.13),rgba(69,218,255,.05));
+  border-color:rgba(120,160,255,.13);
+}
+.nav button.active:before{
+  content:"";position:absolute;left:-1px;top:9px;bottom:9px;width:2px;border-radius:4px;
+  background:var(--cyan);box-shadow:0 0 12px var(--cyan);
+}
+.nav .symbol{width:21px;text-align:center;font-size:16px}
+.nav .count{margin-left:auto;font-size:9px;color:#71809d;background:rgba(255,255,255,.04);padding:3px 6px;border-radius:8px}
+.history{flex:1;min-height:0;overflow:auto;margin-top:6px;padding-right:2px}
+.history-item{
+  padding:10px 10px;border-radius:12px;color:#7e8aa4;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  cursor:pointer;transition:.2s;
+}
+.history-item:hover{background:rgba(255,255,255,.035);color:#cfd8e9}
+.profile{
+  margin-top:11px;border:1px solid var(--line);border-radius:17px;padding:11px;
+  background:rgba(13,18,30,.65);display:flex;align-items:center;gap:10px;
+}
+.avatar{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#2b355a,#151a2d);border:1px solid rgba(143,163,219,.2)}
+.profile strong{font-size:11px}.profile small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.profile .gear{margin-left:auto;border:0;background:transparent;color:#8f9bb3;font-size:17px}
+
+/* MAIN */
+.main{height:100vh;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  height:var(--top);display:flex;align-items:center;justify-content:space-between;gap:15px;
+  padding:10px 18px;border-bottom:1px solid var(--line);
+  background:rgba(4,7,13,.56);backdrop-filter:blur(24px);
+}
+.mobile-menu{display:none}
+.workspace-name{display:flex;align-items:center;gap:10px}
+.workspace-name .mini-core{
+  width:29px;height:29px;border-radius:10px;
+  background:radial-gradient(circle,#fff 0 5%,#75efff 7% 20%,#6e6aff 35%,transparent 67%),conic-gradient(#6cf,#876dff,#111a40,#6cf);
+  box-shadow:0 0 20px rgba(94,223,255,.2);
+}
+.workspace-name strong{font-size:12px;letter-spacing:.08em}.workspace-name small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.top-actions{display:flex;align-items:center;gap:7px}
+.top-icon{
+  width:36px;height:36px;border:1px solid var(--line);background:rgba(14,19,31,.72);color:#aab6cb;border-radius:11px;
+  display:grid;place-items:center;transition:.2s;
+}
+.top-icon:hover{border-color:var(--line2);color:white}
+.live-pill{
+  display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(101,246,176,.15);
+  background:rgba(101,246,176,.045);border-radius:999px;color:#a8eecb;font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 10px var(--green);animation:blink 1.6s infinite}
+
+/* WORKSPACE / TABS */
+.workspace{flex:1;min-height:0;position:relative;overflow:hidden}
+.view{display:none;height:100%;min-height:0}.view.active{display:block}
+.dashboard{height:100%;overflow:auto;padding:18px}
+.dashboard-grid{
+  min-height:100%;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.68fr);gap:17px;
+}
+.card{
+  border:1px solid var(--line);background:linear-gradient(145deg,rgba(11,16,28,.86),rgba(7,11,19,.68));
+  box-shadow:var(--shadow);border-radius:25px;position:relative;overflow:hidden;
+}
+.card:before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(120deg,rgba(110,232,255,.035),transparent 30%,rgba(161,115,255,.025));
+}
+.hero{min-height:650px;display:flex;flex-direction:column}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:17px 19px;border-bottom:1px solid rgba(159,180,225,.08)}
+.card-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8390aa}
+.card-title strong{color:#e8f0ff;letter-spacing:.03em;text-transform:none;font-size:13px}
+.card-action{border:0;background:transparent;color:#74819b;font-size:11px}
+.card-action:hover{color:white}
+
+.core-zone{flex:1;display:grid;place-items:center;position:relative;min-height:390px}
+.core-scene{width:min(45vw,390px);aspect-ratio:1;position:relative;display:grid;place-items:center}
+.core-scene:before{
+  content:"";position:absolute;inset:8%;border-radius:50%;
+  background:radial-gradient(circle,rgba(93,224,255,.06),transparent 61%);
+  filter:blur(5px);animation:scenePulse 4s ease-in-out infinite;
+}
+.ring{
+  position:absolute;border-radius:50%;inset:0;border:1px solid rgba(105,232,255,.16);
+  box-shadow:0 0 50px rgba(54,190,255,.035);
+  animation:spin 24s linear infinite;
+}
+.ring:before,.ring:after{content:"";position:absolute;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 14px var(--cyan)}
+.ring:before{left:28%;top:-3px}.ring:after{right:8%;bottom:17%}
+.ring.r2{inset:7%;border-color:rgba(151,112,255,.19);animation:spinReverse 17s linear infinite}
+.ring.r3{inset:15%;border-style:dashed;border-color:rgba(105,232,255,.15);animation:spin 10s linear infinite}
+.ring.r4{inset:27%;border-color:rgba(255,255,255,.07);animation:spinReverse 7s linear infinite}
+.ring.r5{inset:35%;border:1px solid rgba(105,232,255,.11);animation:spin 4.5s linear infinite}
+.orbit{
+  position:absolute;inset:17%;border-radius:50%;border:1px solid transparent;
+  border-top-color:rgba(105,232,255,.45);transform:rotate(62deg);animation:spin 5.5s linear infinite;
+}
+.orbit.o2{inset:25%;transform:rotate(-36deg);border-top-color:rgba(161,115,255,.55);animation-duration:4s}
+.core-glow{
+  width:43%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 50% 43%,#fff 0 3%,#c8fbff 5%,#76edff 10%,#4bb7ff 19%,#7d68ff 32%,rgba(93,70,220,.23) 46%,transparent 70%);
+  filter:blur(.6px);box-shadow:0 0 45px rgba(85,225,255,.24),0 0 100px rgba(111,78,255,.14);
+  animation:coreBreath 2.7s ease-in-out infinite;
+}
+.core-eye{
+  position:absolute;width:30%;height:12%;border-radius:50%;
+  background:radial-gradient(ellipse,#fff 0 7%,#aef8ff 10% 22%,#776bff 40%,rgba(99,63,206,.6) 57%,transparent 73%);
+  box-shadow:0 0 25px rgba(116,239,255,.9),0 0 80px rgba(121,91,255,.38);
+  animation:eyeBreathe 2s ease-in-out infinite;
+}
+.core-beam{position:absolute;width:62%;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.5}
+.core-beam.b2{transform:rotate(90deg);opacity:.15}
+.scene-label{
+  position:absolute;left:50%;bottom:22px;transform:translateX(-50%);
+  color:#7d8ba5;font-size:9px;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;
+}
+.scene-label b{color:#cfeaff}
+.hero-footer{padding:0 19px 19px}
+.greeting{font-size:21px;font-weight:650;letter-spacing:-.035em}
+.greeting span{color:#8aa1c9}
+.greet-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.status-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.status-chip{
+  border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:999px;padding:6px 9px;color:#8492aa;font-size:9px;
+}
+.status-chip b{color:#cfe0f7;font-weight:600}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:14px}
+.quick{
+  border:1px solid var(--line);background:rgba(255,255,255,.025);color:#aebbd0;border-radius:13px;padding:10px 7px;font-size:10px;transition:.2s;
+}
+.quick:hover{border-color:var(--line2);color:#fff;background:rgba(105,232,255,.05)}
+
+.side-stack{display:flex;flex-direction:column;gap:17px;min-height:650px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:13px}
+.metric{border:1px solid var(--line);background:rgba(255,255,255,.018);border-radius:15px;padding:13px}
+.metric small{font-size:8px;color:#6d7991;text-transform:uppercase;letter-spacing:.16em}.metric strong{display:block;font-size:20px;margin-top:7px;letter-spacing:-.04em}.metric em{font-style:normal;font-size:8px;color:#6bdaac;margin-left:4px}
+.signal{height:62px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.signal-wave{height:28px;display:flex;align-items:center;gap:2px;flex:1}.signal-wave i{width:2px;border-radius:3px;background:linear-gradient(180deg,var(--cyan),var(--blue));opacity:.8;animation:wave 1.2s ease-in-out infinite}.signal-wave i:nth-child(2n){animation-delay:.1s}.signal-wave i:nth-child(3n){animation-delay:.2s}
+.skills{padding:13px;display:flex;flex-direction:column;gap:7px}
+.skill{
+  display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.018);
+}
+.skill-icon{width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:rgba(105,232,255,.07);border:1px solid rgba(105,232,255,.12)}
+.skill b{font-size:10px}.skill small{display:block;color:var(--muted);font-size:8px;margin-top:2px}.skill .on{margin-left:auto;width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 9px var(--green)}
+
+/* CHAT */
+.chat-view{height:100%;display:flex;flex-direction:column}
+.chat-header{
+  min-height:58px;padding:9px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;
+  background:rgba(5,8,14,.55);backdrop-filter:blur(20px);
+}
+.chat-title{display:flex;align-items:center;gap:10px}.chat-title .mini-core{width:30px;height:30px;border-radius:10px;background:radial-gradient(circle,#fff 0 6%,#7ff4ff 9% 22%,#6c6dff 37%,transparent 68%),conic-gradient(#6cf,#86f,#17214a,#6cf);box-shadow:0 0 20px rgba(105,232,255,.18)}
+.chat-title strong{font-size:12px}.chat-title small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.chat-controls{display:flex;gap:7px}
+.chat-scroll{flex:1;min-height:0;overflow:auto;padding:26px max(18px,calc((100% - 850px)/2)) 25px}
+.welcome{text-align:center;padding:20px 0 34px}
+.welcome-core{width:100px;height:100px;margin:auto;border-radius:50%;position:relative;display:grid;place-items:center}
+.welcome-core:before,.welcome-core:after{content:"";position:absolute;border-radius:50%;inset:0;border:1px solid rgba(105,232,255,.22);animation:spin 9s linear infinite}
+.welcome-core:after{inset:10%;border-color:rgba(161,115,255,.25);animation:spinReverse 6s linear infinite}
+.welcome-core span{width:35px;height:35px;border-radius:50%;background:radial-gradient(circle,#fff,#8bf3ff 15%,#716bff 48%,transparent 70%);box-shadow:0 0 35px rgba(105,232,255,.5)}
+.welcome h1{font-size:22px;margin:16px 0 6px}.welcome p{font-size:11px;color:var(--muted);margin:0}
+.msg{display:flex;gap:11px;margin:0 auto 21px;max-width:850px;animation:msgIn .45s var(--ease)}
+.msg.user{justify-content:flex-end}.msg-avatar{width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:12px}
+.msg.ai .msg-avatar{background:radial-gradient(circle,#fff 0 6%,#75f0ff 10% 25%,#716eff 45%,#12182c 70%);box-shadow:0 0 17px rgba(105,232,255,.18)}
+.msg.user .msg-avatar{background:linear-gradient(135deg,#303957,#171c2d);order:2}
+.msg-bubble{max-width:min(700px,80%);border:1px solid var(--line);background:rgba(13,18,29,.72);padding:12px 14px;border-radius:17px;line-height:1.55;font-size:12px;color:#dbe5f6;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.msg.user .msg-bubble{background:linear-gradient(135deg,rgba(88,111,218,.20),rgba(48,181,222,.07));border-color:rgba(105,145,255,.19);order:1}
+.msg-meta{font-size:8px;color:#63718a;margin-top:6px}
+.codebox{margin-top:10px;border:1px solid rgba(105,232,255,.14);background:#050810;border-radius:12px;overflow:hidden}.codehead{display:flex;justify-content:space-between;padding:7px 9px;color:#73819a;font-size:8px;border-bottom:1px solid var(--line)}.codebox pre{margin:0;padding:11px;overflow:auto;color:#b8edff;font:10px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}
+.typing{display:flex;gap:4px;padding:7px}.typing i{width:5px;height:5px;border-radius:50%;background:#7befff;animation:typing .9s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+
+/* WHATSAPP VIEW */
+.wpp{height:100%;display:flex;flex-direction:column;background:#0b141a}
+.wpp-header{background:#202c33;color:#e9edef;padding:10px 14px;display:flex;gap:10px;align-items:center}
+.wpp-header .wpp-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#65e9ff,#6475ff);display:grid;place-items:center;font-size:15px}
+.wpp-header small{color:#8696a0;font-size:9px;display:block}
+.wpp-body{flex:1;min-height:0;overflow:auto;padding:16px 12% 10px;background:#0b141a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ctext y='40' font-size='34' opacity='.04'%3E💬%3C/text%3E%3C/svg%3E")}
+.wpp-msg{max-width:78%;margin-bottom:7px;padding:7px 10px;border-radius:10px;font-size:12px;line-height:1.45;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.25);animation:msgIn .3s var(--ease);word-wrap:break-word}
+.wpp-msg.in{background:#202c33;color:#e9edef;border-top-left-radius:0;float:left;clear:both}
+.wpp-msg.out{background:#005c4b;color:#e9edef;border-top-right-radius:0;float:right;clear:both}
+.wpp-msg .wpp-time{font-size:8px;color:rgba(233,237,239,.55);text-align:right;margin-top:3px}
+.wpp-msg.out .wpp-time{color:#66b2ff}
+.wpp-day{text-align:center;color:#8696a0;font-size:9px;margin:12px 0}
+.wpp-composer{display:flex;gap:8px;padding:8px 10%;background:#202c33}
+.wpp-composer input{flex:1;background:#2a3942;border:0;border-radius:10px;padding:11px 14px;color:#e9edef;font-size:13px;outline:none}
+.wpp-composer button{width:44px;height:44px;border:0;border-radius:50%;background:#00a884;color:#04120d;font-size:17px}
+@media(max-width:860px){.wpp-body{padding:12px 10px}.wpp-composer{padding:8px 8px}}
+@media print{.sidebar,.topbar,.composer-wrap,.chat-header,#space,.noise{display:none!important}body{background:#fff}.msg-bubble{color:#111;border-color:#ddd;background:#fff}}
+[data-accent="violet"]{--cyan:#b78bff;--cyan2:#8a5bff}
+[data-accent="green"]{--cyan:#7cf6b0;--cyan2:#3fe08a}
+[data-accent="amber"]{--cyan:#ffc76a;--cyan2:#ffa53d}
+[data-accent="pink"]{--cyan:#ff8bd0;--cyan2:#ff5fae}
+/* COMPOSER */
+.composer-wrap{padding:11px max(18px,calc((100% - 900px)/2)) 15px;background:linear-gradient(180deg,transparent,rgba(3,5,9,.86) 20%);position:relative}
+.composer{
+  border:1px solid rgba(145,167,220,.17);border-radius:20px;background:rgba(13,18,29,.9);backdrop-filter:blur(25px);
+  box-shadow:0 18px 60px rgba(0,0,0,.35);padding:9px;
+}
+.attach-row{display:none;gap:7px;padding:3px 3px 8px;overflow:auto}.attach-row.show{display:flex}
+.attachment{
+  min-width:110px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:11px;padding:7px;font-size:9px;color:#9eabc0;
+}
+.attachment button{float:right;border:0;background:transparent;color:#71809a}
+.composer textarea{
+  width:100%;min-height:45px;max-height:160px;resize:none;background:transparent;border:0;outline:0;color:#f1f5ff;padding:5px 7px;font-size:13px;
+}
+.composer textarea::placeholder{color:#65718a}
+.composer-tools{display:flex;align-items:center;gap:6px;padding:4px 2px 0}
+.tool-btn{
+  width:34px;height:34px;border:1px solid transparent;background:transparent;color:#8390a8;border-radius:10px;display:grid;place-items:center;
+}
+.tool-btn:hover{border-color:var(--line);background:rgba(255,255,255,.035);color:#eaf5ff}
+.model-select{
+  margin-left:3px;border:1px solid var(--line);background:#0d1320;color:#aab8cf;border-radius:10px;height:34px;padding:0 9px;font-size:9px;outline:none;
+}
+.tool-spacer{flex:1}
+.send-btn{
+  width:38px;height:38px;border:1px solid rgba(105,232,255,.35);border-radius:12px;background:linear-gradient(135deg,#65e9ff,#6475ff);color:#07101b;font-weight:800;
+  box-shadow:0 0 22px rgba(90,206,255,.18);transition:.2s;
+}
+.send-btn:hover{box-shadow:0 0 30px rgba(90,206,255,.36);transform:translateY(-1px)}
+.voice-btn.listening{background:rgba(255,85,125,.15);border-color:rgba(255,85,125,.5);color:#ff8ba4;animation:voicePulse 1s infinite}
+
+/* GENERIC PANELS */
+.panel-view{height:100%;overflow:auto;padding:20px}
+.panel-shell{max-width:1100px;margin:auto}
+.panel-head{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:18px}.panel-head h1{margin:0;font-size:24px;letter-spacing:-.04em}.panel-head p{margin:6px 0 0;color:var(--muted);font-size:11px}
+.panel-actions{display:flex;gap:7px}
+.primary,.secondary{
+  border-radius:11px;padding:9px 13px;font-size:10px;border:1px solid var(--line);background:rgba(255,255,255,.035);color:#c9d5e8;
+}
+.primary{background:linear-gradient(135deg,#6eeaff,#6977ff);color:#06101a;border-color:transparent;font-weight:700}
+.panel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+.panel-box{border:1px solid var(--line);border-radius:19px;background:rgba(10,15,26,.74);overflow:hidden}.panel-box h3{font-size:12px;margin:0;padding:14px 15px;border-bottom:1px solid var(--line)}.panel-box .inner{padding:14px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid rgba(159,180,225,.07)}.setting-row:last-child{border-bottom:0}.setting-row b{font-size:10px}.setting-row small{display:block;color:var(--muted);font-size:8px;margin-top:3px;max-width:460px}
+.toggle{width:38px;height:21px;border-radius:99px;border:1px solid var(--line);background:#121827;padding:2px;transition:.2s}.toggle:before{content:"";display:block;width:15px;height:15px;border-radius:50%;background:#67748b;transition:.2s}.toggle.on{background:rgba(101,246,176,.16);border-color:rgba(101,246,176,.3)}.toggle.on:before{transform:translateX(16px);background:var(--green);box-shadow:0 0 9px var(--green)}
+.select{background:#0d1320;color:#c8d4e8;border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:9px;outline:none}
+.range{accent-color:#76eaff;width:150px}
+
+/* VOICE LAB */
+.voice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.voice-card{
+  border:1px solid var(--line);border-radius:17px;padding:14px;background:rgba(255,255,255,.018);position:relative;transition:.25s var(--ease);cursor:pointer;
+}
+.voice-card:hover{transform:translateY(-2px);border-color:var(--line2)}
+.voice-card.selected{border-color:rgba(105,232,255,.5);box-shadow:0 0 35px rgba(105,232,255,.08),inset 0 0 25px rgba(105,232,255,.035)}
+.voice-card.selected:after{content:"✓";position:absolute;right:12px;top:12px;color:var(--cyan);font-weight:800}
+.voice-orb{width:50px;height:50px;border-radius:50%;margin-bottom:11px;background:radial-gradient(circle,#fff 0 6%,#8af5ff 10% 25%,#766cff 42%,transparent 70%),conic-gradient(#67eaff,#8b6eff,#152044,#67eaff);box-shadow:0 0 23px rgba(105,232,255,.15);animation:voiceFloat 3s ease-in-out infinite}
+.voice-card b{font-size:12px}.voice-card small{display:block;color:var(--muted);font-size:9px;margin-top:4px}.voice-wave{height:22px;margin-top:10px;display:flex;gap:2px;align-items:center}.voice-wave i{width:2px;background:#6feaff;border-radius:2px;height:8px;animation:wave 1.2s ease-in-out infinite}.voice-wave i:nth-child(2n){animation-delay:.12s}.voice-wave i:nth-child(3n){animation-delay:.24s}
+
+/* SKILLS */
+.skill-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.skill-tile{border:1px solid var(--line);border-radius:17px;padding:15px;background:rgba(255,255,255,.018);transition:.2s}.skill-tile:hover{border-color:var(--line2);transform:translateY(-2px)}.skill-tile .big{font-size:24px}.skill-tile b{display:block;margin-top:9px;font-size:11px}.skill-tile p{font-size:9px;color:var(--muted);line-height:1.5;margin:5px 0 12px}.skill-tile button{border:1px solid var(--line);background:transparent;color:#9caac1;border-radius:9px;padding:6px 9px;font-size:8px}.skill-tile.enabled{box-shadow:inset 0 0 25px rgba(105,232,255,.025)}.skill-tile.enabled button{color:#7feeff;border-color:rgba(105,232,255,.2)}
+
+/* COMMAND CENTER */
+.command-list{display:grid;gap:8px}.command{
+  display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.018)
+}.command code{color:#b7f2ff;font:10px ui-monospace,monospace;background:rgba(105,232,255,.045);padding:5px 7px;border-radius:7px}.command span{font-size:10px;color:#a3afc3}.command button{margin-left:auto;border:0;background:transparent;color:#71809a}
+
+/* MEMORY */
+.memory-list{display:grid;gap:8px}.memory{
+  padding:13px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.018);display:flex;align-items:center;gap:10px
+}.memory .m-icon{width:28px;height:28px;border-radius:9px;background:rgba(161,115,255,.08);display:grid;place-items:center}.memory b{font-size:10px}.memory small{display:block;color:var(--muted);font-size:8px;margin-top:3px}.memory button{margin-left:auto;border:0;background:transparent;color:#71809a}
+
+/* MODALS */
+/* ── Open Tools Arsenal ── */
+.tool-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tool-chip{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:20px;padding:5px 12px;font-size:9px;transition:.2s}
+.tool-chip.on{color:var(--cyan);border-color:var(--line2);box-shadow:inset 0 0 18px rgba(105,232,255,.05)}
+.tool-chip:hover{color:var(--cyan)}
+.tool-label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.tool-label .select{margin-top:5px}
+@keyframes toolPulse{0%,100%{opacity:.45}50%{opacity:1}}
+.tool-loading{display:flex;align-items:center;gap:8px;color:var(--cyan);font-size:11px;animation:toolPulse 1.2s infinite}
+.tool-error{color:var(--red);font-size:11px;background:rgba(255,111,134,.06);border:1px solid rgba(255,111,134,.2);border-radius:10px;padding:10px}
+.tool-img{display:block;max-width:100%;border-radius:12px;margin:8px 0}
+.tool-link{color:var(--cyan);text-decoration:none;font-size:11px}
+.tool-link:hover{text-decoration:underline}
+.tool-stat{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;background:rgba(255,255,255,.02)}
+.tool-stat b{display:block;font-size:16px;color:var(--cyan)}
+.tool-stat small{font-size:8px;color:var(--muted)}
+.tool-code{font:11px/1.6 ui-monospace,Consolas,monospace;background:#050810;border:1px solid var(--line);border-radius:10px;padding:10px;color:#bfe4ff;white-space:pre-wrap;word-break:break-all;margin:8px 0}
+@media(max-width:1080px){.tool-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.tool-grid{grid-template-columns:repeat(2,1fr)}}
+.modal{
+  position:fixed;inset:0;z-index:100;display:none;place-items:center;padding:18px;
+  background:rgba(1,3,7,.66);backdrop-filter:blur(16px);
+}
+.modal.show{display:grid;animation:fadeIn .22s ease}
+.modal-box{
+  width:min(720px,100%);max-height:min(85vh,800px);overflow:auto;border:1px solid rgba(150,176,230,.18);
+  background:linear-gradient(145deg,rgba(14,20,33,.97),rgba(6,10,18,.97));border-radius:24px;box-shadow:0 40px 130px rgba(0,0,0,.65);
+  animation:modalIn .3s var(--ease)
+}
+.modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.modal-head strong{font-size:13px}.close{width:31px;height:31px;border:1px solid var(--line);background:transparent;color:#8794ab;border-radius:9px}.modal-body{padding:18px}
+.file-drop{
+  border:1px dashed rgba(105,232,255,.28);border-radius:18px;padding:35px 20px;text-align:center;background:rgba(105,232,255,.025)
+}.file-drop .big{font-size:35px}.file-drop b{display:block;margin-top:10px;font-size:12px}.file-drop p{color:var(--muted);font-size:10px}.file-drop button{border:1px solid var(--line2);background:rgba(105,232,255,.07);color:#b9f5ff;border-radius:10px;padding:9px 13px;font-size:10px}
+
+/* TOAST */
+.toast-stack{position:fixed;right:18px;bottom:18px;z-index:300;display:grid;gap:8px;pointer-events:none}
+.toast{min-width:230px;max-width:340px;padding:11px 13px;border:1px solid var(--line);background:rgba(12,17,28,.94);backdrop-filter:blur(18px);border-radius:13px;box-shadow:var(--shadow);font-size:10px;color:#d8e2f2;animation:toastIn .35s var(--ease)}
+.toast b{color:#7feeff}.toast small{display:block;color:#71809a;margin-top:3px}
+
+/* RESPONSIVE */
+@media(max-width:980px){
+  :root{--sidebar:235px}
+  .dashboard-grid{grid-template-columns:1fr}
+  .side-stack{min-height:0}
+  .hero{min-height:620px}
+  .voice-grid,.skill-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:720px){
+  body{overflow:hidden}
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;z-index:80;left:0;top:0;bottom:0;width:min(300px,86vw);
+    transform:translateX(-105%);transition:.3s var(--ease);box-shadow:30px 0 100px rgba(0,0,0,.55)
+  }
+  .sidebar.open{transform:translateX(0)}
+  .mobile-menu{display:grid}
+  .topbar{padding:9px 11px}.top-actions .hide-mobile{display:none}.workspace-name small{display:none}
+  .dashboard{padding:10px}.dashboard-grid{gap:10px}.hero{min-height:600px;border-radius:21px}.core-scene{width:min(75vw,330px)}
+  .quick-grid{grid-template-columns:repeat(2,1fr)}
+  .chat-scroll{padding:18px 11px 20px}.composer-wrap{padding:8px 9px 10px}
+  .msg-bubble{max-width:84%}
+  .panel-view{padding:12px}.panel-grid{grid-template-columns:1fr}.voice-grid,.skill-grid{grid-template-columns:1fr 1fr}
+  .live-pill{display:none}
+}
+@media(max-width:430px){
+  .voice-grid,.skill-grid{grid-template-columns:1fr}
+  .hero{min-height:570px}.core-zone{min-height:350px}.greeting{font-size:18px}
+  .model-select{max-width:110px}.tool-btn{width:31px}
+}
+
+/* ANIMATIONS */
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes spinReverse{to{transform:rotate(-360deg)}}
+@keyframes starDrift{to{transform:translate3d(-80px,70px,0) rotate(4deg)}}
+@keyframes coreBreath{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1.06);opacity:1}}
+@keyframes eyeBreathe{0%,100%{transform:scaleX(.9);opacity:.75}50%{transform:scaleX(1.1);opacity:1}}
+@keyframes scenePulse{0%,100%{transform:scale(.92);opacity:.5}50%{transform:scale(1.08);opacity:1}}
+@keyframes blink{50%{opacity:.25}}@keyframes voicePulse{50%{box-shadow:0 0 25px rgba(255,90,120,.28)}}
+@keyframes wave{0%,100%{height:7px}50%{height:22px}}
+@keyframes typing{50%{transform:translateY(-4px);opacity:.5}}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes modalIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) translateX(10px)}to{opacity:1;transform:none}}
+@keyframes voiceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px) scale(1.02)}}
+</style>
+<link rel="stylesheet" href="css/refined.css" />
+</head>
+
+<body>
+<div id="space"></div>
+<div class="noise"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-orb"></div>
+      <div><strong>JARVIS</strong><small>AI COMMAND CENTER</small></div>
+    </div>
+
+    <button class="new-chat" onclick="newChat()">＋ <span>Novo chat</span></button>
+
+    <div class="side-title">Workspace</div>
+    <nav class="nav">
+      <button class="active" data-view="home" onclick="switchView('home',this)"><span class="symbol">⌂</span>Visão geral</button>
+      <button data-view="chat" onclick="switchView('chat',this)"><span class="symbol">◉</span>Chat <span class="count">LIVE</span></button>
+      <button data-view="skills" onclick="switchView('skills',this)"><span class="symbol">✦</span>Skills <span class="count">12</span></button>
+      <button data-view="tools" onclick="switchView('tools',this)"><span class="symbol">🧰</span>Open Tools <span class="count">30</span></button>
+      <button data-view="modelos" onclick="switchView('modelos',this)"><span class="symbol">🗄</span>Modelos <span class="count">55</span></button>
+      <button data-view="agent" onclick="switchView('agent',this)"><span class="symbol">🤖</span>Agente <span class="count">NEW</span></button>
+      <button data-view="commands" onclick="switchView('commands',this)"><span class="symbol">⌘</span>Comandos</button>
+      <button data-view="memory" onclick="switchView('memory',this)"><span class="symbol">◈</span>Memória</button>
+      <button data-view="voice" onclick="switchView('voice',this)"><span class="symbol">◌</span>Voz do Jarvis</button>
+    </nav>
+
+    <div class="side-title">Sistema</div>
+    <nav class="nav">
+      <button data-view="wpp" onclick="switchView('wpp',this)"><span class="symbol">💬</span>WhatsApp</button>
+          <button data-view="settings" onclick="switchView('settings',this)"><span class="symbol">⚙</span>Configurações</button>
+      <button onclick="openModal('aboutModal')"><span class="symbol">ⓘ</span>Sobre o sistema</button>
+    </nav>
+
+    <div class="history" id="history">
+      <div class="side-title">Sugestões rápidas</div>
+      <div class="history-item" onclick="loadDemo('o que este projeto faz')">O que este projeto faz?</div>
+      <div class="history-item" onclick="loadDemo('ideias para automações no meu dia a dia')">Ideias de automação</div>
+      <div class="history-item" onclick="switchView('agent')">Abrir Agente Autônomo</div>
+      <div class="history-item" onclick="switchView('modelos')">Ver catálogo de modelos</div>
+    </div>
+
+    <div class="profile">
+      <div class="avatar" id="profileAvatar">M</div>
+      <div><strong id="profileName">Master User</strong><small id="profileSub">acesso completo</small></div>
+      <button class="gear" onclick="switchView('settings')">⚙</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="workspace-name">
+        <button class="top-icon mobile-menu" onclick="toggleSidebar()">☰</button>
+        <div class="mini-core"></div>
+        <div><strong>JARVIS X</strong><small id="viewLabel">Central de comando</small></div>
+      </div>
+      <div class="top-actions">
+        <div class="live-pill"><i class="live-dot"></i> sistema online</div>
+        <button class="top-icon hide-mobile" title="Tela cheia" onclick="fullscreen()">⛶</button>
+        <button class="top-icon" title="Configurações" onclick="switchView('settings')">⚙</button>
+      </div>
+    </header>
+
+    <section class="workspace">
+
+      <!-- HOME -->
+      <div class="view active" id="view-home">
+        <div class="dashboard">
+          <div class="dashboard-grid">
+            <section class="card hero">
+              <div class="card-head">
+                <div class="card-title">NÚCLEO <strong>JARVIS X</strong></div>
+                <button class="card-action" onclick="toggleCinematic()">◉ Modo cinematográfico</button>
+              </div>
+
+              <div class="core-zone">
+                <div class="core-scene" id="coreScene">
+                  <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="ring r4"></div><div class="ring r5"></div>
+                  <div class="orbit"></div><div class="orbit o2"></div>
+                  <div class="core-glow"></div><div class="core-eye"></div>
+                  <div class="core-beam"></div><div class="core-beam b2"></div>
+                  <div class="scene-label">NEURAL CORE <b>ONLINE</b> · LATÊNCIA 42MS</div>
+                </div>
+              </div>
+
+              <div class="hero-footer">
+                <div class="greeting">Boa madrugada, Mestre.</div>
+                <div class="greet-sub">Seu centro de comando está pronto para conversar, executar skills e organizar seus projetos.</div>
+                <div class="status-strip">
+                  <div class="status-chip">Modelo <b id="modelStatus">nenhum conectado</b></div>
+                  <div class="status-chip">Voz <b id="voiceStatus">Navegador</b></div>
+                  <div class="status-chip">Memória <b id="memoryStatus">ATIVA</b></div>
+                  <div class="status-chip">Modo <b id="cinemaStatus">CINEMA</b></div>
+                </div>
+                <div class="quick-grid">
+                  <button class="quick" onclick="quickPrompt('Analise meu projeto e encontre melhorias')">⌁ Analisar projeto</button>
+                  <button class="quick" onclick="quickPrompt('Crie um plano de automação')">⚡ Criar automação</button>
+                  <button class="quick" onclick="quickPrompt('Ative o modo cinematográfico')">✦ Modo cinema</button>
+                  <button class="quick" onclick="switchView('chat')">◉ Abrir chat</button>
+                </div>
+              </div>
+            </section>
+
+            <aside class="side-stack">
+              <section class="card">
+                <div class="card-head"><div class="card-title">TELEMETRIA</div><span style="font-size:9px;color:#6d7b95">LIVE</span></div>
+                <div class="metrics">
+                  <div class="metric"><small>Latência</small><strong id="latency">42<em>ms</em></strong></div>
+                  <div class="metric"><small>Contexto</small><strong>87<em>%</em></strong></div>
+                  <div class="metric"><small>Skills</small><strong>12<em>ON</em></strong></div>
+                  <div class="metric"><small>Memória</small><strong>96<em>MB</em></strong></div>
+                </div>
+                <div class="signal"><span style="font-size:9px;color:#74819b">NEURAL SIGNAL</span><div class="signal-wave" id="signalWave"></div></div>
+              </section>
+
+              <section class="card">
+                <div class="card-head"><div class="card-title">SKILLS ATIVAS</div><button class="card-action" onclick="switchView('skills')">ver todas →</button></div>
+                <div class="skills">
+                  <div class="skill"><div class="skill-icon">🌐</div><div><b>Web Intelligence</b><small>pesquisa e síntese</small></div><i class="on"></i></div>
+                  <div class="skill"><div class="skill-icon">🧠</div><div><b>Memory Core</b><small>contexto persistente</small></div><i class="on"></i></div>
+                  <div class="skill"><div class="skill-icon">⚙</div><div><b>Automation</b><small>tarefas e fluxos</small></div><i class="on"></i></div>
+                  <div class="skill"><div class="skill-icon">🎙</div><div><b>Voice Interface</b><small>escuta e fala</small></div><i class="on"></i></div>
+                </div>
+              </section>
+
+              <section class="card" style="padding:16px">
+                <div class="card-title">COMANDO RÁPIDO</div>
+                <p style="font-size:11px;color:#9ba8be;line-height:1.5">Use a central de chat para falar, enviar arquivos, fotos ou vídeos e acionar suas skills.</p>
+                <button class="primary" style="width:100%" onclick="switchView('chat')">Abrir central de comando</button>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="view" id="view-chat">
+        <div class="chat-view">
+          <div class="chat-header">
+            <div class="chat-title"><div class="mini-core"></div><div><strong>Conversa com JARVIS</strong><small>multimodal · voz · arquivos · skills</small></div></div>
+            <div class="chat-controls" style="display:flex;align-items:center;gap:8px"><div class="live-pill" onclick="switchView('settings')" style="cursor:pointer"><span class="live-dot" id="aiStatusDot" style="background:#ffc76a;box-shadow:0 0 10px #ffc76a"></span><b id="aiStatusText">MODO DEMO</b></div><button class="top-icon" title="Exportar conversa" onclick="exportChat()">⤓</button><button class="top-icon" onclick="clearChat()">⌫</button></div>
+          </div>
+          <div class="chat-scroll" id="chatScroll">
+            <div class="welcome" id="welcome">
+              <div class="welcome-core"><span></span></div>
+              <h1>Como posso operar, Mestre?</h1>
+              <p>Digite, fale, envie um arquivo ou escolha uma skill.</p>
+            </div>
+            <div id="messages"></div>
+          </div>
+          <div class="composer-wrap">
+            <div class="composer">
+              <div class="attach-row" id="attachRow"></div>
+              <textarea id="prompt" rows="1" placeholder="Mensagem para o JARVIS..." oninput="resizeComposer(this);localStorage.setItem('jarvis_draft',this.value)" onkeydown="handleKey(event)"></textarea>
+              <div class="composer-tools">
+                <button class="tool-btn" title="Adicionar arquivo" onclick="openModal('fileModal')">＋</button>
+                <button class="tool-btn" title="Imagem" onclick="chooseFile('image/*')">▧</button>
+                <button class="tool-btn" title="Vídeo" onclick="chooseFile('video/*')">▣</button>
+                <button class="tool-btn" title="Plugins / Skills" onclick="openModal('skillsModal')">✦</button>
+                <select class="model-select" id="modelSelect" onchange="chatModelChanged(this.value)">
+                  <option>carregando modelos…</option>
+                </select>
+                <div class="tool-spacer"></div>
+                <button class="tool-btn voice-btn" id="voiceBtn" title="Falar com JARVIS" onclick="toggleVoice()">🎙</button>
+                <button class="send-btn" onclick="sendMessage()">➤</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHATSAPP -->
+      <div class="view" id="view-wpp">
+        <div class="wpp">
+          <div class="wpp-header">
+            <div class="wpp-av">✦</div>
+            <div><strong style="font-size:13px">JARVIS no WhatsApp</strong><small id="wppStatus">online · IA real</small></div>
+          </div>
+          <div class="wpp-body" id="wppBody"><div class="wpp-day">HOJE</div></div>
+          <div class="wpp-composer">
+            <input id="wppInput" placeholder="Mensagem..." onkeydown="if(event.key==='Enter')wppSend()">
+            <button onclick="wppSend()">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SKILLS -->
+      <div class="view" id="view-skills">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Skills</h1><p>Módulos que ampliam o cérebro do agente.</p></div><button class="primary" onclick="toast('Skill Lab','Catálogo de skills carregado.')">＋ Nova skill</button></div>
+          <div class="skill-grid" id="skillGrid"></div>
+        </div></div>
+      </div>
+
+      <!-- OPEN TOOLS -->
+      <div class="view" id="view-tools">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Open Tools</h1><p>30 ferramentas open source — APIs livres e utilitários locais, direto no navegador.</p></div><span class="status-chip">OPENSOURCE <b>30</b></span></div>
+          <input class="select" id="toolSearch" placeholder="🔎 Buscar ferramenta..." oninput="renderTools()" style="width:100%;max-width:420px;margin:2px 0 10px">
+          <div id="toolChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
+          <div class="tool-grid" id="toolGrid"></div>
+        </div></div>
+      </div>
+
+      <!-- MODELOS -->
+      <div class="view" id="view-modelos">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Modelos de IA</h1><p>Catálogo organizado: free, pagos e locais. Toque em "usar" para ativar no chat.</p></div><span class="status-chip" id="modelCount">55 modelos</span></div>
+          <input class="select" id="modelSearch" placeholder="🔎 Buscar modelo ou provedor..." oninput="modelFilter=this.value;buildModelos()" style="width:100%;max-width:420px;margin:2px 0 14px">
+          <div id="modelGrid"></div>
+          <div class="panel-box"><h3>Extensões &amp; Plugins <small id="extCount" style="font-weight:400;color:var(--muted)"></small></h3><div class="inner">
+            <input class="select" id="extSearch" placeholder="Buscar repositório… (voz, agente, WhatsApp, OCR, música…)" style="width:100%;margin-bottom:10px" oninput="buildExtensoes()">
+            <div id="extGrid"></div>
+          </div></div>
+        </div></div>
+      </div>
+
+      <!-- AGENTE AUTÔNOMO -->
+      <div class="view" id="view-agent">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Agente Autônomo</h1><p>Missões por conta própria: WhatsApp real, abrir apps no celular e pesquisa aberta — 100% open source.</p></div><span class="status-chip">AUTONOMY <b>OPEN</b></span></div>
+          <section class="card" style="padding:16px;margin-bottom:14px">
+            <label class="tool-label">Objetivo da missão</label>
+            <textarea class="select" id="agentGoal" rows="2" style="width:100%;min-height:64px;margin:6px 0 10px" placeholder="Ex: mandar bom dia para 5511999998888 no WhatsApp e abrir o YouTube"></textarea>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="primary" onclick="runAgent()">🚀 Executar missão</button>
+              <button class="secondary" onclick="clearAgentLog()">⌫ Limpar registro</button>
+              <span class="status-chip" id="agentBrainStatus">MODO LOCAL</span>
+            </div>
+            <small style="display:block;margin-top:10px;color:var(--muted)">Servidor de WhatsApp (Evolution API): configure em Configurações → Backend do JARVIS. <span id="agentBackendPreview" style="color:#69e8ff"></span></small>
+          </section>
+          <div class="panel-box"><h3>Registro da missão</h3><div class="inner"><div class="memory-list" id="agentLog"><div class="memory"><div class="m-icon">◈</div><div><b>Pronto para missões</b><small>O agente planeja, executa e notifica. Sem servidor, entrega links/QR direto no celular.</small></div></div></div></div></div>
+          <div class="panel-box"><h3>Ferramentas do agente</h3><div class="inner" style="font-size:10px;color:var(--muted);line-height:2">💬 WhatsApp (wa.me + Evolution API no servidor) · 📲 Abrir apps no celular (WhatsApp, ligação, mapas, YouTube, Instagram, GitHub, e-mail, Spotify) · 📚 Pesquisa aberta (Wikipédia) · 🔔 Notificação com voz</div></div>
+        </div></div>
+      </div>
+
+      <!-- COMMANDS -->
+      <div class="view" id="view-commands">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Comandos</h1><p>Biblioteca de comandos rápidos para operar o sistema.</p></div><button class="secondary" onclick="copyCommands()">⧉ Copiar lista</button></div>
+          <div class="panel-box"><h3>Comandos disponíveis</h3><div class="inner"><div class="command-list" id="commandList"></div></div></div>
+        </div></div>
+      </div>
+
+      <!-- MEMORY -->
+      <div class="view" id="view-memory">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Memória</h1><p>Contexto local da interface. Os dados desta demo ficam no navegador.</p></div><button class="secondary" onclick="clearMemory()">Limpar demo</button></div>
+          <div class="panel-box"><h3>Contextos salvos</h3><div class="inner"><div class="memory-list" id="memoryList"></div></div></div>
+        </div></div>
+      </div>
+
+      <!-- VOICE -->
+      <div class="view" id="view-voice">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Voz do JARVIS</h1><p>Escolha a personalidade sonora e teste a fala do navegador.</p></div><button class="primary" onclick="speak('Sistema de voz JARVIS online. Pronto para receber comandos.')">▶ Testar voz</button></div>
+          <div class="panel-box"><h3>Voz ativa agora</h3><div class="inner">
+            <div class="setting-row"><div><b id="activeVoiceLabel">Navegador (Web Speech)</b><small id="activeVoiceDesc">Sem ElevenLabs nem backend local configurado — voz robótica do navegador.</small></div><button class="primary" onclick="testVoice()">🔊 Testar voz</button></div>
+          </div></div>
+          <section class="panel-box" style="margin-top:14px"><h3>Voz Open Source (local, grátis)</h3><div class="inner">
+            <div class="setting-row"><div><b>Piper TTS</b><small>Leve, roda até em PC fraco (leve como superagente de voz). https://github.com/rhasspy/piper</small></div><span class="status-chip">LEVE</span></div>
+            <div class="setting-row"><div><b>Coqui XTTS-v2</b><small>Clonagem de voz local, open source. https://github.com/coqui-ai/TTS</small></div><span class="status-chip">CLONE</span></div>
+            <div class="setting-row"><div><b>F5-TTS</b><small>Voz clonada de alta qualidade em PT-BR. https://github.com/SWivid/F5-TTS</small></div><span class="status-chip">HIFI</span></div>
+            <div class="setting-row"><div><b>Kokoro TTS</b><small>TTS rápido e pequeno, ótimo para agentes. https://github.com/hexgrad/kokoro</small></div><span class="status-chip">RAPID</span></div>
+            <div class="setting-row"><div><b>whisper.cpp</b><small>Transcrição offline (ouvido do agente). https://github.com/ggml-org/whisper.cpp</small></div><span class="status-chip">STT</span></div>
+          </div></section>
+        </div></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="panel-view"><div class="panel-shell">
+          <div class="panel-head"><div><h1>Configurações</h1><p>Controle a aparência, voz, comportamento e experiência do JARVIS.</p></div><button class="secondary" onclick="resetSettings()">Restaurar</button></div>
+          <div class="panel-grid">
+            <section class="panel-box"><h3>Interface</h3><div class="inner">
+              <div class="setting-row"><div><b>Modo cinematográfico</b><small>Intensifica partículas, brilho e animações.</small></div><button class="toggle on" data-setting="cinema" onclick="toggleSetting(this,'cinema')"></button></div>
+              <div class="setting-row"><div><b>Ruído visual</b><small>Granulação discreta para profundidade.</small></div><button class="toggle on" data-setting="noise" onclick="toggleSetting(this,'noise')"></button></div>
+              <div class="setting-row"><div><b>Linhas de varredura</b><small>Efeito de monitor futurista.</small></div><button class="toggle on" data-setting="scan" onclick="toggleSetting(this,'scan')"></button></div>
+              <div class="setting-row"><div><b>Escala da interface</b><small>Ajuste visual da densidade.</small></div><input class="range" type="range" min="90" max="110" value="100" oninput="setScale(this.value)"></div>
+              <div class="setting-row"><div><b>Cor de destaque</b><small>Cyan, violeta, verde, âmbar ou rosa.</small></div><div><button class="secondary" onclick="setAccent('cyan')">cyan</button> <button class="secondary" onclick="setAccent('violet')">violeta</button> <button class="secondary" onclick="setAccent('green')">verde</button> <button class="secondary" onclick="setAccent('amber')">âmbar</button> <button class="secondary" onclick="setAccent('pink')">rosa</button></div></div>
+            </div></section>
+            <section class="panel-box"><h3>Assistente</h3><div class="inner">
+              <div class="setting-row"><div><b>Resposta por voz</b><small>Fala automaticamente após respostas.</small></div><button class="toggle" data-setting="autovoice" onclick="toggleSetting(this,'autovoice')"></button></div>
+              <div class="setting-row"><div><b>Memória local</b><small>Salva preferências e pequenas notas no navegador.</small></div><button class="toggle on" data-setting="memory" onclick="toggleSetting(this,'memory')"></button></div>
+              <div class="setting-row"><div><b>Idioma</b><small>Idioma principal da interface.</small></div><select class="select"><option>Português (Brasil)</option><option>English</option><option>Español</option></select></div>
+            </div></section>
+            <section class="panel-box"><h3>Servidor de IA (real)</h3><div class="inner">
+              <div class="setting-row"><div><b>Provedor</b><small>Groq, OpenRouter e Cerebras têm plano gratuito.</small></div><select class="select" id="apiProvider" onchange="fillModelSuggestion(this.value)"><option value="groq">Groq (grátis)</option><option value="openrouter">OpenRouter (grátis)</option><option value="zen">OpenCode Zen (open source)</option><option value="cerebras">Cerebras (grátis)</option><option value="nvidia">NVIDIA NIM (chave grátis)</option><option value="mistral">Mistral (chave grátis)</option><option value="aiml">AI/ML API (Space Bunny)</option><option value="mimo">Xiaomi MiMo (API oficial)</option><option value="ollama">Ollama (local, sem chave)</option><option value="lmstudio">LM Studio (local, sem chave)</option><option value="custom">Personalizado (compatível com OpenAI)</option></select></div>
+              <div class="setting-row"><div><b>Chave de API</b><small>Fica salva só no seu navegador (localStorage).</small></div><input class="select" id="apiKey" type="password" placeholder="gsk_..." style="max-width:180px"></div>
+              <div class="setting-row"><div><b>Modelo</b><small id="apiModelHint">Do mais rápido ao mais forte.</small></div><select class="select" id="apiModelSelect" onchange="modelSelectChanged(this.value)"></select></div>
+              <div class="setting-row" id="apiModelCustomRow" style="display:none"><div><b>Modelo personalizado</b><small>Nome exato do modelo na API.</small></div><input class="select" id="apiModel" placeholder="modelo" style="max-width:180px"></div>
+              <div class="setting-row"><div><b>URL do servidor</b><small>Só para provedor personalizado.</small></div><input class="select" id="apiUrl" placeholder="https://.../v1/chat/completions" style="max-width:180px"></div>
+              <div class="setting-row"><div><b>Conexão</b><small id="apiStatus">Não configurado.</small></div><button class="primary" onclick="saveApiConfig()">Conectar</button></div>
+              <div class="setting-row"><div><b>Prompt de sistema</b><small>Personalidade e regras do JARVIS.</small></div><input class="select" id="sysPrompt" placeholder="personalidade..." style="max-width:180px"></div>
+              <div class="setting-row"><div><b>Criatividade</b><small>0 = preciso · 2 = criativo.</small></div><input type="range" min="0" max="2" step="0.1" id="tempRange" style="max-width:180px"></div>
+              <div class="setting-row"><div><b>Uso da API</b><small id="usageStats">0 requisições · 0 tokens</small></div><span style="font-size:9px;color:#69e8ff">FREE TIER</span></div>
+              <div class="setting-row"><div><b>Backend do JARVIS</b><small>Servidor FastAPI local — usado pelo login Google, WhatsApp e voz real.</small></div><input class="select" id="jarvisBackendUrl" placeholder="http://192.168.1.5:8080" style="max-width:180px" oninput="saveJarvisBackend(this.value)"></div>
+            </div></section>
+            <section class="panel-box"><h3>Voz real (ElevenLabs)</h3><div class="inner">
+              <div class="setting-row"><div><b>Chave ElevenLabs</b><small>Grátis em elevenlabs.io. Salva só no navegador.</small></div><input class="select" id="elKey" type="password" placeholder="sk_..." style="max-width:180px"></div>
+              <div class="setting-row"><div><b>Voz</b><small>Escolha entre as vozes premium.</small></div><select class="select" id="elVoice"><option value="21m00Tcm4TlvDq8ikWAM">Rachel</option><option value="AZnzlk1XvdvUeBnXmlld">Domi</option><option value="EXAVITQu4vr4xnSDxMaL">Bella</option><option value="ErXwobaYiN019PkyDvjT">Antoni</option><option value="TxGEqnHWrfWFTfGW9XjX">Josh</option><option value="VR6AewLTigW4xSOBS77B">Arnold</option><option value="pNInz6obpgDQGcFmaJgB">Adam</option><option value="XB0fDUnXU5powFXDhCwa">Charlotte</option></select></div>
+              <div class="setting-row"><div><b>Voz open source (local)</b><small>Usa o mesmo Backend do JARVIS configurado em Configurações → Desenvolvedor. Piper/Kokoro/XTTS rodando lá = voz real automática.</small></div><span id="voiceBackendPreview" style="font-size:9px;color:#69e8ff">não configurado</span></div>
+              <div class="setting-row"><div><b>Status</b><small id="elStatus">Não configurado.</small></div><button class="primary" onclick="switchView('settings')">Ir pra Configurações</button></div>
+              <div class="setting-row"><div><b>ElevenLabs</b><small>Alternativa paga (se preferir).</small></div><button class="secondary" onclick="saveVoiceConfig()">Ativar ElevenLabs</button></div>
+            </div></section>
+            <section class="panel-box"><h3>Desenvolvedor</h3><div class="inner">
+              <div class="setting-row"><div><b>Instalar como app</b><small>Instala o JARVIS X no celular/PC (PWA).</small></div><button class="primary" onclick="installApp()">Instalar</button></div>
+              <div class="setting-row"><div><b>Última resposta (JSON)</b><small>Inspecione o retorno bruto da API.</small></div><button class="secondary" onclick="showLastJson()">Ver</button></div>
+              <div class="setting-row"><div><b>Exportar config</b><small>Baixa provedores, chaves e ajustes em JSON.</small></div><button class="secondary" onclick="exportConfig()">Baixar</button></div>
+              <div class="setting-row"><div><b>Importar config</b><small>Restaura de um jarvis-config.json.</small></div><button class="secondary" onclick="document.getElementById('configImport').click()">Abrir</button></div>
+              <input type="file" id="configImport" accept=".json" hidden onchange="importConfig(this)">
+              <div class="setting-row"><div><b>Apagar tudo</b><small>Limpa chat, memória, chaves e ajustes.</small></div><button class="secondary" style="color:#ff6f86" onclick="wipeAll()">Apagar</button></div>
+              <pre id="devOut" style="display:none;max-height:180px;overflow:auto;font:9px/1.5 ui-monospace,Consolas,monospace;color:#8be9ff;background:#050810;border:1px solid var(--line);border-radius:10px;padding:9px;margin:8px 0 0;white-space:pre-wrap"></pre>
+            </div></section>
+            <section class="panel-box"><h3>Conta &amp; Privacidade</h3><div class="inner">
+              <div class="setting-row"><div><b>Login com Google</b><small id="googleLoginHint">Entre pra sincronizar seu perfil real (fica salvo com sessão persistente).</small></div><button class="primary" id="googleLoginBtn" onclick="loginGoogle()">Entrar com Google</button></div>
+              <div class="setting-row"><div><b>Arquivos</b><small>Arquivos escolhidos são exibidos somente nesta interface.</small></div><span style="font-size:9px;color:#76e9b2">LOCAL</span></div>
+              <div class="setting-row"><div><b>Microfone</b><small>O navegador pede permissão quando o reconhecimento de voz é ativado.</small></div><span style="font-size:9px;color:#76e9b2">BROWSER</span></div>
+            </div></section>
+          </div>
+        </div></div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="fileModal" onclick="outsideClose(event,this)">
+  <div class="modal-box"><div class="modal-head"><strong>Adicionar conteúdo</strong><button class="close" onclick="closeModal('fileModal')">×</button></div><div class="modal-body">
+    <div class="file-drop" onclick="chooseFile('*/*')"><div class="big">⌁</div><b>Arquivo, foto ou vídeo</b><p>Escolha um arquivo do dispositivo para anexar à conversa.</p><button>Selecionar arquivo</button></div>
+    <input id="fileInput" type="file" multiple hidden onchange="handleFiles(this.files)">
+  </div></div>
+</div>
+
+<div class="modal" id="skillsModal" onclick="outsideClose(event,this)">
+  <div class="modal-box"><div class="modal-head"><strong>Skills rápidas</strong><button class="close" onclick="closeModal('skillsModal')">×</button></div><div class="modal-body">
+    <div class="skill-grid">
+      <div class="skill-tile enabled" onclick="useSkill('Pesquisa')"><div class="big">🌐</div><b>Pesquisa</b><p>Preparar uma consulta de pesquisa.</p><button>Usar skill</button></div>
+      <div class="skill-tile enabled" onclick="useSkill('Código')"><div class="big">⌘</div><b>Código</b><p>Gerar e revisar código.</p><button>Usar skill</button></div>
+      <div class="skill-tile enabled" onclick="useSkill('Visão')"><div class="big">◉</div><b>Visão</b><p>Analisar imagens e referências.</p><button>Usar skill</button></div>
+      <div class="skill-tile enabled" onclick="useSkill('Automação')"><div class="big">⚡</div><b>Automação</b><p>Montar fluxos e rotinas.</p><button>Usar skill</button></div>
+    </div>
+  </div></div>
+</div>
+
+<div class="modal" id="aboutModal" onclick="outsideClose(event,this)">
+  <div class="modal-box"><div class="modal-head"><strong>JARVIS X</strong><button class="close" onclick="closeModal('aboutModal')">×</button></div><div class="modal-body">
+    <p style="font-size:12px;color:#d5deed;line-height:1.7">Interface de assistente avançada, construída em um único arquivo HTML. A camada visual funciona localmente. IA real: conecte Groq, OpenRouter ou Cerebras em Configurações → Servidor de IA. Sem chave configurada, opera em modo demonstração local.</p>
+    <div class="status-strip"><div class="status-chip">UI <b>v3.0</b></div><div class="status-chip">ENGINE <b>LOCAL</b></div><div class="status-chip">RESPONSIVE <b>YES</b></div></div>
+  </div></div>
+</div>
+
+<div class="modal" id="toolModal" onclick="outsideClose(event,this)">
+  <div class="modal-box" style="max-width:540px">
+    <div class="modal-head"><strong id="toolModalTitle">Ferramenta</strong><button class="close" onclick="closeModal('toolModal')">×</button></div>
+    <div class="modal-body">
+      <p id="toolModalDesc" style="font-size:10px;color:var(--muted);margin:0 0 12px"></p>
+      <div id="toolFields" style="display:grid;gap:10px;margin-bottom:12px"></div>
+      <button class="primary" style="width:100%" onclick="runTool()">▶ Executar</button>
+      <div id="toolResult" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+/* =========================================================
+   JARVIS X — FRONT-END ENGINE
+   ========================================================= */
+
+const state = {
+  view:'home',
+  model:localStorage.getItem('jarvis_model') || 'JARVIS X',
+  voice:localStorage.getItem('jarvis_voice') || 'Marin',
+  cinema:localStorage.getItem('jarvis_cinema') !== 'off',
+  memory:localStorage.getItem('jarvis_memory') !== 'off',
+  autoVoice:localStorage.getItem('jarvis_autovoice') === 'on',
+  messages:JSON.parse(localStorage.getItem('jarvis_messages') || '[]'),
+  memories:JSON.parse(localStorage.getItem('jarvis_memories') || '[]'),
+  sys:localStorage.getItem('jarvis_sys') || 'Você é J.A.R.V.I.S., assistente pessoal em português do Brasil. Responda de forma direta, técnica e cordial, com tom de interface futurista.',
+  temp:parseFloat(localStorage.getItem('jarvis_temp')) || 0.7,
+  usage:JSON.parse(localStorage.getItem('jarvis_usage') || '{"requests":0,"tokens":0}'),
+  el:{key:localStorage.getItem('jarvis_el_key')||'',voice:localStorage.getItem('jarvis_el_voice')||'21m00Tcm4TlvDq8ikWAM'},
+  api:{
+    provider:localStorage.getItem('jarvis_api_provider') || '',
+    key:localStorage.getItem('jarvis_api_key') || '',
+    model:localStorage.getItem('jarvis_api_model') || '',
+    url:localStorage.getItem('jarvis_api_url') || ''
+  }
+};
+
+const API_ENDPOINTS = {
+  groq:'https://api.groq.com/openai/v1/chat/completions',
+  openrouter:'https://openrouter.ai/api/v1/chat/completions',
+  zen:'https://opencode.ai/zen/v1/chat/completions',
+  cerebras:'https://api.cerebras.ai/v1/chat/completions',
+  nvidia:'https://integrate.api.nvidia.com/v1/chat/completions',
+  mistral:'https://api.mistral.ai/v1/chat/completions',
+  aiml:'https://api.aimlapi.com/v1/chat/completions',
+  mimo:'https://mimo.mi.com/api/v1/chat/completions',
+  ollama:'http://192.168.1.5:12434/v1/chat/completions',
+  lmstudio:'http://192.168.1.5:12434/v1/chat/completions',
+  custom:''
+};
+const API_MODELS = {
+  groq:[['openai/gpt-oss-20b','rápido'],['qwen/qwen3.8-27b','forte'],['openai/gpt-oss-120b','mais forte']],
+  openrouter:[['meta-llama/llama-3.1-8b-instruct:free','rápido'],['meta-llama/llama-3.3-70b-instruct:free','forte'],['mistralai/mistral-nemo:free','forte'],['deepseek/deepseek-r1:free','mais forte'],['inclusionai/ling-3.0-flash-fin:free','financeiro · 256K'],['nvidia/nemotron-3-ultra-550b-a55b:free','raciocínio MoE'],['nvidia/nemotron-3.5-lightning:free','ultra rápido'],['meta/muse-spark-1.3','agentic coding']],
+  zen:[['nvidia/nemotron-3-ultra-550b-a55b','raciocínio'],['inclusionai/ling-3.0-flash-fin','financeiro'],['meta/muse-spark-1.3','agentic']],
+  aiml:[['space-bunny-alpha','stealth · 1M ctx'],['inclusionai/ling-3.0-flash-fin','financeiro']],
+  mimo:[['mimo-v2.6-flash','1M tokens · multimodal']],
+  cerebras:[['llama3.1-8b','rápido'],['llama-3.3-70b','forte']],
+  nvidia:[['meta/llama-3.1-8b-instruct','rápido'],['meta/llama-3.3-70b-instruct','forte'],['qwen/qwen2.5-coder-32b-instruct','coder'],['nvidia/llama-3.3-nemotron-super-49b-v1','forte'],['nvidia/nemotron-3-ultra-550b-a55b','mais forte'],['nvidia/nemotron-3.5-lightning','ultra rápido']],
+  mistral:[['open-mistral-nemo','rápido'],['mistral-small-latest','forte'],['mistral-large-latest','mais forte']],
+  ollama:[['qwen2.5-0.5b-instruct-q4_k_m-431b7581bfb8','local · Qwen 0.5B'],['llama3.2','rápido'],['llama3.3','forte'],['qwen2.5:14b','mais forte']],
+  lmstudio:[['qwen2.5-0.5b-instruct-q4_k_m-431b7581bfb8','local · 0.5B']],
+  custom:[]
+};
+function apiReady(){
+  const a=state.api;
+  if(!a.model)return false;
+  if(a.provider==='ollama'||a.provider==='lmstudio'||a.provider==='zen')return true;
+  if(a.provider==='custom')return !!(a.url&&a.key);
+  return !!a.key;
+}
+function fillModelSuggestion(v){
+  const sel=$('apiModelSelect');
+  const list=API_MODELS[v]||[];
+  sel.innerHTML=list.map(m=>'<option value="'+m[0]+'">'+m[1]+' · '+m[0]+'</option>').join('')+'<option value="__custom">personalizado…</option>';
+  $('apiModelCustomRow').style.display='none';
+  $('apiKey').parentElement.style.opacity=(v==='ollama'||v==='lmstudio')?.35:1;
+}
+function modelSelectChanged(v){ $('apiModelCustomRow').style.display=(v==='__custom')?'':'none' }
+async function saveApiConfig(){
+  const p=$('apiProvider').value, k=$('apiKey').value.trim(), u=$('apiUrl').value.trim();
+  const selV=$('apiModelSelect').value;
+  const m=(selV==='__custom')?$('apiModel').value.trim():selV;
+  if(!m){ $('apiStatus').textContent='Escolha um modelo.'; return }
+  if(!k&&p!=='ollama'&&p!=='lmstudio'&&p!=='zen'){ $('apiStatus').textContent='Informe a chave de API.'; return }
+  if(p==='custom'&&!u){ $('apiStatus').textContent='Informe a URL do servidor.'; return }
+  state.api={provider:p,key:k,model:m,url:u};
+  state.sys=$('sysPrompt').value.trim()||state.sys;
+  state.temp=parseFloat($('tempRange').value)||0.7;
+  localStorage.setItem('jarvis_api_provider',p);
+  localStorage.setItem('jarvis_api_key',k);
+  localStorage.setItem('jarvis_api_model',m);
+  localStorage.setItem('jarvis_api_url',u);
+  localStorage.setItem('jarvis_sys',state.sys);
+  localStorage.setItem('jarvis_temp',String(state.temp));
+  updateAiStatus();
+  $('apiStatus').textContent='Testando conexão…';
+  try{
+    const t0=performance.now();
+    await callRealAI('Responda apenas: ok');
+    $('apiStatus').textContent='Conectado ✓ '+Math.round(performance.now()-t0)+'ms · '+m;
+    toast('Servidor conectado','IA real ativa ('+p+'): '+m);
+  }catch(err){
+    $('apiStatus').textContent='Salvo, mas o teste falhou: '+err.message.slice(0,60);
+  }
+}
+function updateAiStatus(){
+  const pill=$('aiStatusText'),dot=$('aiStatusDot');
+  if(!pill)return;
+  if(apiReady()){pill.textContent=state.api.provider.toUpperCase()+' · '+state.api.model;dot.style.background='#65f6b0';dot.style.boxShadow='0 0 10px #65f6b0'}
+  else{pill.textContent='MODO DEMO · toque para ativar';dot.style.background='#ffc76a';dot.style.boxShadow='0 0 10px #ffc76a'}
+}
+let AI_ABORT=null;
+function stopAI(){if(AI_ABORT)AI_ABORT.abort()}
+async function callRealAI(userText,onStream){
+  const a=state.api;
+  const endpoint=a.provider==='custom'?a.url:API_ENDPOINTS[a.provider];
+  const hist=state.messages.slice(-10).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}));
+  AI_ABORT=new AbortController();
+  const res=await fetch(endpoint,{
+    method:'POST',
+    signal:AI_ABORT.signal,
+    headers:(a.provider==='ollama'||a.provider==='lmstudio'||a.provider==='zen')?{'Content-Type':'application/json'}:{'Content-Type':'application/json','Authorization':'Bearer '+a.key},
+    body:JSON.stringify({model:a.model,stream:!!onStream,messages:[{role:'system',content:state.sys},...hist,{role:'user',content:userText}],temperature:state.temp})
+  });
+  if(!res.ok){const d=await res.text();throw new Error('HTTP '+res.status+': '+d.slice(0,120))}
+  state.usage.requests++;saveUsage();
+  if(!onStream){
+    const data=await res.json();
+    window.JX_LAST=JSON.stringify(data,null,1).slice(0,4000);
+    state.usage.tokens+=(data.usage&&data.usage.total_tokens)||0;saveUsage();
+    let txt=data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
+    txt=String(txt).replace(/[\s\S]*?<\/think>/g,'').trim();
+    if(!txt)throw new Error('Resposta vazia do servidor.');
+    return txt;
+  }
+  const reader=res.body.getReader();const dec=new TextDecoder();
+  let buf='',full='',lastJson='';
+  while(true){
+    const r=await reader.read();
+    if(r.done)break;
+    buf+=dec.decode(r.value,{stream:true});
+    const lines=buf.split('\n');buf=lines.pop();
+    for(const line of lines){
+      const t=line.trim();
+      if(!t.startsWith('data:'))continue;
+      const payload=t.slice(5).trim();
+      if(payload==='[DONE]')continue;
+      try{
+        const j=JSON.parse(payload);lastJson=payload;
+        const d=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
+        if(d){full+=d;onStream(d)}
+      }catch(e){}
+    }
+  }
+  window.JX_LAST=lastJson.slice(0,4000);
+  full=full.replace(/[\s\S]*?<\/think>/g,'').trim();
+  if(!full)throw new Error('Resposta vazia do servidor.');
+  return full;
+}
+function saveUsage(){localStorage.setItem('jarvis_usage',JSON.stringify(state.usage));const el=$('usageStats');if(el)el.textContent=state.usage.requests+' requisições · '+state.usage.tokens+' tokens'}
+
+const skills = [
+  ['🌐','Web Intelligence','Pesquisa, síntese e navegação assistida.'],
+  ['🧠','Memory Core','Contexto, preferências e histórico local.'],
+  ['⚡','Automation','Estruturação de tarefas e automações.'],
+  ['🎙','Voice Interface','Reconhecimento e síntese de voz do navegador.'],
+  ['👁','Vision','Leitura e análise de imagens.'],
+  ['🎬','Cinematic Studio','Prompts, cenas e direção visual.'],
+  ['⌘','Code Forge','HTML, CSS, JS e arquitetura de projetos.'],
+  ['📁','File Lab','Arquivos, documentos e anexos.'],
+  ['🧩','Plugin Hub','Catálogo de integrações externas.'],
+  ['📊','Data Lab','Tabelas, métricas e análises.'],
+  ['🛡','Privacy Core','Controles de privacidade da interface.'],
+  ['🛰','Command Router','Roteamento de comandos e atalhos.']
+];
+
+const commands = [
+  ['/calc 5*3+1','Calculadora segura.'],
+  ['/clima São Paulo','Clima real agora (open-meteo).'],
+  ['/moeda bitcoin','Preço de cripto em USD e BRL.'],
+  ['/traduzir en bom dia','Tradutor (mymemory).'],
+  ['/definir house','Dicionário de inglês.'],
+  ['/qr https://...','Gera um código QR.'],
+  ['/senha 20','Gera senha forte com crypto.'],
+  ['/timer 10','Timer com aviso de voz.'],
+  ['/piada','Piada traduzida.'],
+  ['/conselho','Conselho do dia.'],
+  ['/cachorro','Foto aleatória de cachorro.'],
+  ['/cor','Paleta de cores aleatória.'],
+  ['/slug Meu Título','Gera slug de URL.'],
+  ['/contar seu texto','Conta palavras e caracteres.'],
+  ['/wiki Einstein','Resumo da Wikipédia PT.'],
+  ['/dolar','Cotação USD em BRL e outras moedas.'],
+  ['/iss','Posição ao vivo da Estação Espacial.'],
+  ['/ip 8.8.8.8','Localização de qualquer IP.'],
+  ['/repo usuario/repo','Dados de repositórios GitHub.'],
+  ['/site github.com','Verifica se um site está no ar.'],
+  ['/tedio','Sugestão de atividade.'],
+  ['/frase','Frase inspiradora do dia.'],
+  ['/ar São Paulo','Qualidade do ar da cidade.'],
+  ['/imprimir','Exporta a conversa em PDF.'],
+  ['"modo cinema"','Ativa o visual cinematográfico.'],
+  ['"abrir chat"','Vai para a central de conversa.'],
+  ['"mostrar skills"','Abre o laboratório de skills.'],
+  ['"qual minha voz?"','Exibe a voz atualmente selecionada.'],
+  ['"nova conversa"','Limpa a conversa atual.'],
+  ['"lembrar ..."','Cria uma nota na memória local.'],
+  ['"ler arquivo"','Abre o seletor de arquivos.'],
+  ['"configurações"','Abre o painel de configurações.']
+];
+
+function $(id){return document.getElementById(id)}
+
+function init(){
+  buildSignal();
+  buildSkills();
+  buildOpenTools();
+  const abk=localStorage.getItem('jarvis_backend_url');if(abk){const ab=$('agentBackend');if(ab)ab.value=abk}
+  updateAgentBrain();
+  buildModelos();
+  buildChatModelBar();
+  buildExtensoes();
+  const bk=jarvisBackendUrl();if(bk){const jb=$('jarvisBackendUrl');if(jb)jb.value=bk}
+  refreshBackendPreviews();
+  try{const gs=localStorage.getItem('jarvis_google_session');if(gs)state.google=JSON.parse(gs)}catch(e){}
+  updateProfileUI();
+  buildCommands();
+  refreshVoiceStatus();
+  renderMemory();
+  restoreMessages();
+  applyCinema();
+  const acc=localStorage.getItem('jarvis_accent');if(acc)setAccent(acc);
+  const dr=localStorage.getItem('jarvis_draft');if(dr){$('prompt').value=dr;resizeComposer($('prompt'))}
+  $('modelSelect').value=state.model;
+  if(state.el.key){$('elKey').value=state.el.key;$('elVoice').value=state.el.voice;$('elStatus').textContent='Ativa ✓'}
+  $('sysPrompt').value=state.sys;
+  $('tempRange').value=state.temp;
+  saveUsage();
+  if(state.api.provider){ $('apiProvider').value=state.api.provider; fillModelSuggestion(state.api.provider); const sel=$('apiModelSelect'); if([...sel.options].some(o=>o.value===state.api.model)){ sel.value=state.api.model } else if(state.api.model){ sel.value='__custom'; modelSelectChanged('__custom'); $('apiModel').value=state.api.model } $('apiKey').value=state.api.key; $('apiUrl').value=state.api.url; $('apiStatus').textContent='Conectado ('+state.api.provider+')'; } else { fillModelSuggestion('groq') }
+  wppRestore();
+  updateAiStatus();
+  switchView('chat');
+  refreshVoiceStatus();
+  updateClock();
+  setInterval(updateClock,1000);
+  setInterval(updateTelemetry,1300);
+  window.addEventListener('resize',()=>{});
+}
+
+function switchView(view,button=null){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const target=$('view-'+view);
+  if(target)target.classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  const nav=document.querySelector(`.nav button[data-view="${view}"]`);
+  if(nav)nav.classList.add('active');
+  state.view=view;
+  const labels={home:'Central de comando',chat:'Conversa multimodal',skills:'Laboratório de skills',tools:'Arsenal Open Source · 30 ferramentas',agent:'Agente Autônomo · missões',modelos:'Catálogo de modelos · free + pagos',commands:'Biblioteca de comandos',memory:'Memória local',voice:'Voice Lab',settings:'Configurações'};
+  $('viewLabel').textContent=labels[view]||'Central de comando';
+  if(view==='chat')setTimeout(()=>scrollChat(),60);
+  if(window.innerWidth<720)$('sidebar').classList.remove('open');
+}
+
+function toggleSidebar(){$('sidebar').classList.toggle('open')}
+
+function newChat(){
+  state.messages=[];
+  localStorage.removeItem('jarvis_messages');
+  $('messages').innerHTML='';
+  $('welcome').style.display='';
+  switchView('chat');
+  toast('Nova conversa','O canal neural foi reiniciado.');
+}
+
+function clearChat(){newChat()}
+
+function quickPrompt(text){
+  switchView('chat');
+  $('prompt').value=text;
+  setTimeout(sendMessage,180);
+}
+
+function sendMessage(){
+  const input=$('prompt');
+  const text=input.value.trim();
+  if(!text)return;
+  addMessage('user',text);
+  input.value='';localStorage.removeItem('jarvis_draft');
+  resizeComposer(input);
+  $('welcome').style.display='none';
+  if(text.startsWith('/')){handleCommand(text);return}
+
+  if(state.memory){
+    state.memories.unshift({title:text.slice(0,48),desc:'Criado durante esta sessão.',time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})});
+    state.memories=state.memories.slice(0,12);
+    localStorage.setItem('jarvis_memories',JSON.stringify(state.memories));
+    renderMemory();
+  }
+
+  const lower=text.toLowerCase();
+  if(lower.includes('modo cinema')){toggleCinematic(true)}
+  if(lower.includes('abrir chat'))switchView('chat');
+  if(lower.includes('skill'))switchView('skills');
+  if(lower.includes('configura'))switchView('settings');
+  if(lower.includes('voz'))switchView('voice');
+  if(lower.includes('nova conversa'))newChat();
+  if(lower.startsWith('lembrar ')){
+    const note=text.substring(8);
+    saveMemory(note);
+  }
+
+  const typingId='typing-'+Date.now();
+  aiReply(text);
+}
+
+async function aiReply(text){
+  const typingId='typing-'+Date.now();
+  (async()=>{
+    addTyping(typingId);
+    const t0=performance.now();
+    if(apiReady()){
+      const el=$(typingId);
+      const bubble=el?el.querySelector('.msg-bubble'):null;
+      if(bubble)bubble.innerHTML='<span id="streamText"></span>';
+      const target=$('streamText');
+      setGenerating(true);
+      try{
+        const reply=await callRealAI(text,piece=>{if(target){target.textContent+=piece;scrollChat()}});
+        removeTyping(typingId);
+        addMessage('ai',reply,Math.round(performance.now()-t0));
+        if(state.autoVoice)speak(reply);
+      }catch(err){
+        removeTyping(typingId);
+        const msg=(err&&err.name==='AbortError')?'⏹ Geração interrompida pelo operador.':'⚠ Falha no servidor de IA: '+err.message+'. Verifique chave/modelo em Configurações.';
+        addMessage('ai',msg);
+      }finally{setGenerating(false)}
+    }else{
+      setTimeout(()=>{
+        removeTyping(typingId);
+        const reply=generateDemoReply(text);
+        addMessage('ai',reply);
+        if(state.autoVoice)speak(reply);
+      },850+Math.random()*900);
+    }
+  })();
+}
+
+function generateDemoReply(text){
+  const t=text.toLowerCase();
+  if(t.includes('cinema'))return 'Modo cinematográfico ativado (efeito visual real, veja Configurações → Interface).';
+  return 'Nenhum modelo de IA real está conectado ainda — isso aqui é só um eco local, sem inteligência nenhuma. Toque no chip "MODO DEMO" no topo (ou vá em Configurações → Servidor de IA) e escolha um modelo real e grátis, como o OpenCode Zen (não precisa de chave).';
+}
+
+function escapeHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function renderRich(t){
+  let out=escapeHtml(t);
+  out=out.replace(/```(\w*)\n?([\s\S]*?)```/g,(m,lang,code)=>'<div class="codebox"><div class="codehead"><span>'+(lang||'code')+'</span><button onclick="copyCode(this)" style="border:0;background:transparent;color:#7befff;font-size:8px;cursor:pointer">copiar</button></div><pre>'+code.replace(/\n$/,'')+'</pre></div>');
+  out=out.replace(/`([^`\n]+)`/g,'<code style="background:#0a1420;border:1px solid rgba(105,232,255,.14);border-radius:5px;padding:1px 5px;color:#8be9ff;font-family:ui-monospace,Consolas,monospace">$1</code>');
+  out=out.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  out=out.replace(/(^|\s)_([^_]+)_/g,'$1<i>$2</i>');
+  out=out.replace(/\n/g,'<br>');
+  out=out.replace(/(^|<br>)(https?:\/\/[^<\s]+\.(jpg|jpeg|png|gif|webp))($|<br>)/gi,'$1<img src="$2" style="max-width:240px;border-radius:12px;margin-top:8px;border:1px solid var(--line)">$4');
+  return out;
+}
+function copyCode(btn){const pre=btn.closest('.codebox').querySelector('pre');navigator.clipboard.writeText(pre.textContent).then(()=>{btn.textContent='copiado ✓';setTimeout(()=>btn.textContent='copiar',1500)})}
+function addMessage(role,text,latency){
+  const wrap=document.createElement('div');
+  wrap.className='msg '+role;
+  const avatar=document.createElement('div');
+  avatar.className='msg-avatar';
+  avatar.textContent=role==='ai'?'✦':'M';
+  const body=document.createElement('div');
+  const bubble=document.createElement('div');
+  bubble.className='msg-bubble';
+  bubble.innerHTML=renderRich(text);
+  const meta=document.createElement('div');
+  meta.className='msg-meta';
+  const base=(role==='ai'?'JARVIS':'Você')+' · '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  meta.innerHTML=base+((role==='ai'&&latency)?' · '+latency+'ms':'')+(role==='ai'?' · <span style="cursor:pointer" onclick="copyMsg(this)">copiar</span> · <span style="cursor:pointer" onclick="regenLast(this)">regenerar</span>':'');
+  body.appendChild(bubble);body.appendChild(meta);
+  wrap.appendChild(avatar);wrap.appendChild(body);
+  $('messages').appendChild(wrap);
+  state.messages.push({role,text});
+  localStorage.setItem('jarvis_messages',JSON.stringify(state.messages.slice(-40)));
+  scrollChat();
+}
+function copyMsg(el){const m=el.closest('.msg');const text=m.querySelector('.msg-bubble').textContent;navigator.clipboard.writeText(text).then(()=>{el.textContent='copiado ✓';setTimeout(()=>el.textContent='copiar',1500)})}
+function setGenerating(on){const b=document.querySelector('.send-btn');if(!b)return;b.textContent=on?'⏹':'➤';b.setAttribute('onclick',on?'stopAI()':'sendMessage()')}
+function exportChat(){
+  const lines=state.messages.map(m=>(m.role==='ai'?'JARVIS: ':'VOCÊ: ')+m.text);
+  const blob=new Blob([lines.join('\n\n')],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jarvis-conversa-'+Date.now()+'.txt';a.click();
+  toast('Exportado','Conversa salva como arquivo de texto.');
+}
+function exportConfig(){
+  const cfg={};
+  ['jarvis_api_provider','jarvis_api_key','jarvis_api_model','jarvis_api_url','jarvis_sys','jarvis_temp','jarvis_model','jarvis_voice'].forEach(k=>{const v=localStorage.getItem(k);if(v)cfg[k]=v});
+  const blob=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jarvis-config.json';a.click();
+  toast('Config exportada','jarvis-config.json baixado.');
+}
+function importConfig(inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const cfg=JSON.parse(r.result);Object.entries(cfg).forEach(kv=>localStorage.setItem(kv[0],kv[1]));toast('Config importada','Recarregando…');setTimeout(()=>location.reload(),900)}catch(e){toast('Erro','JSON inválido.')}};
+  r.readAsText(f);
+}
+function wipeAll(){if(confirm('Apagar TODOS os dados locais do JARVIS X?')){localStorage.clear();location.reload()}}
+function showLastJson(){const el=$('devOut');if(!el)return;el.style.display='';el.textContent=window.JX_LAST||'Nenhuma resposta ainda. Envie uma mensagem com IA real conectada.'}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=$('installBtn');if(b)b.style.display=''});
+function installApp(){if(!deferredPrompt){toast('Instalação','Use o menu do navegador: "Adicionar à tela inicial" / "Instalar app".');return}deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;const b=$('installBtn');if(b)b.style.display='none'})}
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+function addTyping(id){
+  const wrap=document.createElement('div');
+  wrap.className='msg ai';wrap.id=id;
+  wrap.innerHTML='<div class="msg-avatar">✦</div><div><div class="msg-bubble"><div class="typing"><i></i><i></i><i></i></div></div></div>';
+  $('messages').appendChild(wrap);scrollChat();
+}
+function removeTyping(id){const el=$(id);if(el)el.remove()}
+function restoreMessages(){
+  if(!state.messages.length)return;
+  $('welcome').style.display='none';
+  state.messages.forEach(m=>renderStoredMessage(m));
+}
+function renderStoredMessage(m){
+  const wrap=document.createElement('div');wrap.className='msg '+m.role;
+  const avatar=document.createElement('div');avatar.className='msg-avatar';avatar.textContent=m.role==='ai'?'✦':'M';
+  const body=document.createElement('div');const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=m.text;
+  body.appendChild(bubble);wrap.appendChild(avatar);wrap.appendChild(body);$('messages').appendChild(wrap);
+}
+function scrollChat(){const s=$('chatScroll');if(s)s.scrollTop=s.scrollHeight}
+function resizeComposer(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px'}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
+let wppMsgs=JSON.parse(localStorage.getItem('jarvis_wpp')||'[]');
+function wppRender(role,text){
+  const b=$('wppBody');
+  const d=document.createElement('div');
+  d.className='wpp-msg '+(role==='user'?'out':'in');
+  const now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  d.innerHTML=escapeHtml(text).replace(/\n/g,'<br>')+'<div class="wpp-time">'+now+(role==='user'?' ✓✓':'')+'</div>';
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function wppRestore(){wppMsgs.slice(-30).forEach(m=>{const d=document.createElement('div');d.className='wpp-msg '+(m.role==='user'?'out':'in');d.innerHTML=escapeHtml(m.text).replace(/\n/g,'<br>')+'<div class="wpp-time">'+(m.time||'')+(m.role==='user'?' ✓✓':'')+'</div>';$('wppBody').appendChild(d)})}
+async function wppSend(){
+  const inp=$('wppInput');
+  const text=inp.value.trim();
+  if(!text)return;
+  const now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  wppMsgs.push({role:'user',text,time:now});wppSave();wppRender('user',text);
+  inp.value='';
+  const typing=document.createElement('div');typing.className='wpp-msg in';typing.id='wppTyping';
+  typing.innerHTML='<div class="typing"><i></i><i></i><i></i></div>';$('wppBody').appendChild(typing);$('wppBody').scrollTop=1e9;
+  if(!apiReady()){
+    typing.remove();
+    const r='Ative a IA real em Configurações para eu responder aqui (Groq é grátis).';
+    wppMsgs.push({role:'ai',text:r,time:now});wppSave();wppRender('ai',r);
+    return;
+  }
+  try{
+    const hist=wppMsgs.slice(-10).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}));
+    const a=state.api;
+    const endpoint=a.provider==='custom'?a.url:API_ENDPOINTS[a.provider];
+    const res=await fetch(endpoint,{method:'POST',headers:(a.provider==='ollama'||a.provider==='lmstudio')?{'Content-Type':'application/json'}:{'Content-Type':'application/json','Authorization':'Bearer '+a.key},body:JSON.stringify({model:a.model,messages:[{role:'system',content:state.sys+' No contexto: você está respondendo num chat estilo WhatsApp, responda curto e natural, como numa conversa informal.'},...hist],temperature:state.temp})});
+    if(!res.ok){const d=await res.text();throw new Error('HTTP '+res.status+': '+d.slice(0,80))}
+    const data=await res.json();
+    let txt=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content:'';
+    txt=String(txt).replace(/[\s\S]*?<\/think>/g,'').trim();
+    if(!txt)throw new Error('resposta vazia');
+    typing.remove();
+    const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    wppMsgs.push({role:'ai',text:txt,time:t});wppSave();wppRender('ai',txt);
+  }catch(e){
+    typing.remove();
+    const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const r='⚠ Erro: '+e.message;
+    wppMsgs.push({role:'ai',text:r,time:t});wppSave();wppRender('ai',r);
+  }
+}
+function wppSave(){localStorage.setItem('jarvis_wpp',JSON.stringify(wppMsgs.slice(-40)))}
+function regenLast(el){const last=[...state.messages].reverse().find(m=>m.role==='user');if(!last)return;aiReply(last.text)}
+async function calcExpr(e){try{if(!/^[0-9+\-*/(). %]+$/.test(e))throw 0;return String(Function('return ('+e+')')())}catch(x){return null}}
+const SLASH={
+  async calc(a){const r=await calcExpr(a);return r!==null?'🧮 = '+r:'Expressão inválida. Use números e + - * / ( ).'},
+  async senha(a){const n=Math.min(64,Math.max(8,parseInt(a)||16));const cs='abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';const arr=new Uint32Array(n);crypto.getRandomValues(arr);return '🔑 Senha: '+[...arr].map(v=>cs[v%cs.length]).join('')},
+  async cor(a){const h=()=>Math.floor(Math.random()*360);let out='🎨 Paleta:\n';for(let i=0;i<5;i++){const c=`hsl(${h()},70%,${45+Math.random()*20|0}%)`;out+='`'+c+'`\n'}return out+'Copie os valores acima.'},
+  async slug(a){return '🔗 '+a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')},
+  async contar(a){const w=a.trim().split(/\s+/).filter(Boolean).length;return '📊 '+w+' palavras · '+a.length+' caracteres'},
+  async clima(a){
+    const c=a||'Sao Paulo';
+    const g=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=pt&name='+encodeURIComponent(c)).then(r=>r.json());
+    if(!g.results||!g.results.length)return 'Cidade não encontrada: '+c;
+    const L=g.results[0];
+    const w=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${L.latitude}&longitude=${L.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`).then(r=>r.json());
+    const codes={0:'céu limpo',1:'predominante limpo',2:'parcialmente nublado',3:'nublado',45:'neblina',48:'neblina gelada',51:'garoa leve',53:'garoa',55:'garoa forte',61:'chuva leve',63:'chuva',65:'chuva forte',71:'neve leve',73:'neve',80:'pancadas leves',81:'pancadas',82:'pancadas fortes',95:'tempestade'};
+    return `🌦 **${L.name}, ${L.country_code}**\n• Agora: **${w.current.temperature_2m}°C**, ${codes[w.current.weather_code]||'—'}\n• Umidade: ${w.current.relative_humidity_2m}%\n• Vento: ${w.current.wind_speed_10m} km/h\n• Hoje: ${w.daily.temperature_2m_min[0]}°C / ${w.daily.temperature_2m_max[0]}°C`},
+  async moeda(a){
+    const id=(a||'bitcoin').toLowerCase().replace('btc','bitcoin').replace('eth','ethereum').replace('sol','solana');
+    const d=await fetch('https://api.coingecko.com/api/v3/simple/price?ids='+id+'&vs_currencies=usd,brl&include_24hr_change=true').then(r=>r.json());
+    if(!d[id])return 'Cripto não encontrada: '+id;
+    const v=d[id];
+    return `💰 **${id}**\n• USD: $${v.usd.toLocaleString('en')} (${(v.usd_24h_change||0).toFixed(2)}% 24h)\n• BRL: R$ ${v.brl.toLocaleString('pt-BR')}`},
+  async qr(a){const t=a||location.href;return '🔳 Código QR gerado:\n'+encodeURIComponent(t).length+' caracteres\nhttps://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(t)},
+  async timer(a){
+    const m=parseFloat(a)||5;
+    setTimeout(()=>{toast('⏰ Timer','Tempo esgotado ('+m+' min)!');speak('Timer finalizado.')},m*60000);
+    return '⏰ Timer de '+m+' minutos iniciado. Aviso com toast e voz.'},
+  async traduzir(a){
+    const m=a.match(/^(en|es|fr|de|it|pt)\s+([\s\S]+)$/i);
+    const q=m?m[2]:a;const lang=m?m[1].toLowerCase():'en';
+    const d=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(q.slice(0,499))+'&langpair=pt|'+lang).then(r=>r.json());
+    return d.responseData?'🌐 ('+lang+') '+d.responseData.translatedText:'Falha na tradução.'},
+  async definir(a){
+    const d=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(a)).then(r=>r.ok?r.json():null);
+    if(!d)return 'Palavra não encontrada (dicionário em inglês): '+a;
+    const e=d[0];const ph=e.phonetics.find(x=>x.text);
+    let out='📖 **'+e.word+'**'+(ph?' '+ph.text:'')+'\n';
+    e.meanings.slice(0,3).forEach(m=>{out+='*'+m.partOfSpeech+':* '+m.definitions[0].definition+'\n'});
+    return out},
+  async piada(){const d=await fetch('https://official-joke-api.appspot.com/random_joke').then(r=>r.json());const t=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent((d.setup+' '+d.punchline).slice(0,499))+'&langpair=en|pt').then(r=>r.json()).catch(()=>null);return '😄 '+(t.responseData?t.responseData.translatedText:d.setup+' — '+d.punchline)},
+  async conselho(){const d=await fetch('https://api.adviceslip.com/advice').then(r=>r.json());const t=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(d.slip.advice.slice(0,499))+'&langpair=en|pt').then(r=>r.json()).catch(()=>null);return '💡 '+(t.responseData?t.responseData.translatedText:d.slip.advice)},
+  async cachorro(){const d=await fetch('https://random.dog/woof.json').then(r=>r.json());return '🐶 https://random.dog/'+d.url.split('/').pop()},
+  async imprimir(){setTimeout(()=>window.print(),400);return '🖨 Abrindo diálogo de impressão/PDF...'},
+  async wiki(a){
+    const d=await fetch('https://pt.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(a)).then(r=>r.ok?r.json():null);
+    if(!d)return 'Termo não encontrado na Wikipédia PT: '+a;
+    return '📚 **'+d.title+'**\n'+d.extract+(d.content_urls?'\n\n'+d.content_urls.desktop.page:'')},
+  async dolar(a){
+    const d=await fetch('https://open.er-api.com/v6/latest/USD').then(r=>r.json());
+    const moeda=(a||'BRL').toUpperCase();
+    const v=d.rates&&d.rates[moeda];
+    return v!==undefined?'💱 1 USD = '+v.toFixed(2)+' '+moeda:'Moeda inválida.'},
+  async iss(a){
+    const d=await fetch('https://api.wheretheiss.at/v1/satellites/25544').then(r=>r.json());
+    return '🛰 **ISS ao vivo**\n• Lat: '+d.latitude.toFixed(2)+'° / Lon: '+d.longitude.toFixed(2)+'°\n• Altitude: '+Math.round(d.altitude)+' km\n• Velocidade: '+Math.round(d.velocity)+' km/h'},
+  async ip(a){
+    const d=await fetch('https://ipwho.is/'+(a||'')).then(r=>r.json());
+    if(d.success===false)return 'IP inválido.';
+    return '🌐 **'+d.ip+'**\n• '+d.city+', '+d.region+', '+d.country+'\n• Provedor: '+(d.connection&&d.connection.isp||'—')+'\n• UTC'+d.timezone.utc},
+  async repo(a){
+    const d=await fetch('https://api.github.com/repos/'+a).then(r=>r.ok?r.json():null);
+    if(!d)return 'Repositório não encontrado: '+a+' (formato: usuario/repo)';
+    return '📦 **'+d.full_name+'**\n• ⭐ '+d.stargazers_count+' · 🍴 '+d.forks_count+' · issues: '+d.open_issues_count+'\n• Linguagem: '+(d.language||'—')+'\n• '+(d.description||'sem descrição')+'\n\n'+d.html_url},
+  async site(a){
+    const dom=(a||'').replace(/^https?:\/\//,'').split('/')[0];
+    if(!dom)return 'Uso: /site dominio.com';
+    const d=await fetch('https://isitup.org/'+dom+'.json').then(r=>r.json());
+    return d.isup?'✅ '+d.domain+' está **no ar** ('+d.response_code+', '+Math.round(d.response_time*1000)+'ms)':'❌ '+d.domain+' está fora do ar.'},
+  async tedio(a){
+    const d=await fetch('https://www.boredapi.com/api/activity').then(r=>r.json());
+    return '🎲 Sugestão: '+d.activity+'\n• Tipo: '+d.type+' · Participantes: '+d.participants},
+  async frase(a){
+    const d=await fetch('https://zenquotes.io/api/random').then(r=>r.json());
+    return '✨ "'+d[0].q+'" — '+d[0].a},
+  async ar(a){
+    const c=a||'Sao Paulo';
+    const g=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=pt&name='+encodeURIComponent(c)).then(r=>r.json());
+    if(!g.results||!g.results.length)return 'Cidade não encontrada: '+c;
+    const L=g.results[0];
+    const w=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${L.latitude}&longitude=${L.longitude}&current=european_aqi,pm2_5&timezone=auto`).then(r=>r.json());
+    const q=w.current.european_aqi;
+    const nivel=q<=20?'boa ✅':q<=40?'razoável 🙂':q<=60?'moderada 😷':q<=80?'ruim ⚠️':'péssima ☠️';
+    return '🌫 **'+L.name+'**\n• Índice (AQI europeu): **'+q+'** — qualidade '+nivel+'\n• PM2.5: '+w.current.pm2_5+' µg/m³'},
+};
+async function handleCommand(text){
+  const sp=text.indexOf(' ');
+  const cmd=text.slice(1,sp>0?sp:undefined).toLowerCase();
+  const arg=sp>0?text.slice(sp+1):'';
+  const fn=SLASH[cmd];
+  if(!fn){addMessage('ai','Comando desconhecido: /'+cmd+'\nUse /help na Biblioteca de comandos. Se a IA real estiver conectada, pergunte normalmente.');return}
+  try{addMessage('ai',await fn(arg))}catch(e){addMessage('ai','⚠ Erro no comando /'+cmd+': '+(e.message||e))}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal').forEach(m=>m.style.display='none')});
+function setAccent(c){document.documentElement.setAttribute('data-accent',c);localStorage.setItem('jarvis_accent',c)}
+['prompt'].forEach(()=>{});
+
+
+function buildSignal(){
+  const box=$('signalWave');if(!box)return;
+  for(let i=0;i<36;i++){const x=document.createElement('i');x.style.height=(7+Math.random()*20)+'px';x.style.animationDelay=(Math.random()*.6)+'s';box.appendChild(x)}
+}
+function updateTelemetry(){
+  const n=35+Math.floor(Math.random()*25);$('latency').innerHTML=n+'<em>ms</em>';
+}
+
+function buildSkills(){
+  $('skillGrid').innerHTML=skills.map((s,i)=>`
+    <div class="skill-tile enabled">
+      <div class="big">${s[0]}</div><b>${s[1]}</b><p>${s[2]}</p>
+      <button onclick="toast('${s[1]}','Skill disponível no núcleo local.')">Configurar</button>
+    </div>`).join('');
+}
+function buildCommands(){
+  $('commandList').innerHTML=commands.map(c=>`
+    <div class="command"><code>${escapeHtml(c[0])}</code><span>${c[1]}</span><button onclick="useCommand('${escapeAttr(c[0])}')">usar →</button></div>`).join('');
+}
+function refreshVoiceStatus(){
+  const lbl=$('activeVoiceLabel'),desc=$('activeVoiceDesc'),chip=$('voiceStatus');
+  let name='Navegador',info='Web Speech API — voz padrão do sistema.';
+  if(state.el&&state.el.key){name='ElevenLabs';info='Voz premium real: '+(document.getElementById('elVoice')?.selectedOptions?.[0]?.textContent||state.el.voice||'')}
+  else if(jarvisBackendUrl()){name='Backend local';info='Piper/Kokoro/XTTS no seu servidor: '+jarvisBackendUrl()}
+  if(lbl)lbl.textContent=name;if(desc)desc.textContent=info;if(chip)chip.textContent=name;
+}
+function testVoice(){speak('Voz real testada com sucesso, mestre.')}
+let elAudio=null;
+function saveVoiceConfig(){
+  const k=$('elKey').value.trim();
+  if(!k){$('elStatus').textContent='Cole a chave primeiro.';return}
+  state.el.key=k;state.el.voice=$('elVoice').value;refreshVoiceStatus();
+  localStorage.setItem('jarvis_el_key',k);localStorage.setItem('jarvis_el_voice',state.el.voice);
+  $('elStatus').textContent='Testando voz…';
+  speakEl('Voz real ativada, mestre.').then(ok=>{
+    if(ok){$('elStatus').textContent='Ativa ✓ '+$('elVoice').selectedOptions[0].text;toast('Voz real','ElevenLabs conectado.')}
+    else{$('elStatus').textContent='Chave inválida ou sem crédito.'}
+  });
+}
+async function speakEl(text){
+  try{
+    const res=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+state.el.voice,{
+      method:'POST',
+      headers:{'xi-api-key':state.el.key,'Content-Type':'application/json'},
+      body:JSON.stringify({text:text.slice(0,900),model_id:'eleven_multilingual_v2',voice_settings:{stability:.45,similarity_boost:.75}})
+    });
+    if(!res.ok)return false;
+    const blob=await res.blob();
+    if(elAudio)elAudio.pause();
+    elAudio=new Audio(URL.createObjectURL(blob));
+    elAudio.play();
+    return true;
+  }catch(e){return false}
+}
+async function speak(text){
+  if(state.el.key){speakEl(text);return}
+  if(await speakLocal(text))return;
+  if(!('speechSynthesis' in window)){toast('Voz','Síntese de voz não suportada neste navegador.');return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='pt-BR';u.rate=0.95;u.pitch=state.voice==='Cedar'?.8:1;
+  speechSynthesis.speak(u);
+}
+let recognition=null;
+
+async function speakLocal(text){
+  const base=jarvisBackendUrl();
+  if(!base)return false;
+  try{
+    const r=await fetch(base.replace(/\/+$/,'')+'/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    if(!r.ok)return false;
+    const blob=await r.blob();
+    new Audio(URL.createObjectURL(blob)).play();
+    return true;
+  }catch(e){return false}
+}
+
+function toggleVoice(){
+  const btn=$('voiceBtn');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Microfone','Reconhecimento de voz não disponível neste navegador.');return}
+  if(recognition){recognition.stop();return}
+  recognition=new SR();recognition.lang='pt-BR';recognition.interimResults=true;recognition.continuous=false;
+  btn.classList.add('listening');
+  toast('Microfone','Estou ouvindo...');
+  recognition.onresult=e=>{
+    let text='';for(const r of e.results)text+=r[0].transcript;
+    $('prompt').value=text;resizeComposer($('prompt'));
+    if(e.results[0].isFinal)sendMessage();
+  };
+  recognition.onerror=()=>{btn.classList.remove('listening');toast('Microfone','Não foi possível acessar o reconhecimento de voz.')}
+  recognition.onend=()=>{btn.classList.remove('listening');recognition=null}
+  recognition.start();
+}
+
+function chooseFile(accept){
+  const input=$('fileInput');input.accept=accept;input.click();
+}
+function handleFiles(files){
+  if(!files||!files.length)return;
+  closeModal('fileModal');
+  const row=$('attachRow');row.classList.add('show');
+  [...files].forEach(file=>{
+    const el=document.createElement('div');el.className='attachment';
+    el.innerHTML='<button onclick="this.parentElement.remove()">×</button><b>'+escapeHtml(file.name)+'</b><br><span>'+formatBytes(file.size)+'</span>';
+    row.appendChild(el);
+  });
+  toast('Anexo adicionado',files.length+' arquivo(s) pronto(s) para a conversa.');
+}
+function formatBytes(bytes){if(!bytes)return '0 B';const u=['B','KB','MB','GB'];let i=0,n=bytes;while(n>1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i?1:0)+' '+u[i]}
+
+function openModal(id){$(id).classList.add('show')}
+function closeModal(id){$(id).classList.remove('show')}
+function outsideClose(e,el){if(e.target===el)el.classList.remove('show')}
+
+function setModel(model){
+  state.model=model;localStorage.setItem('jarvis_model',model);
+  $('modelStatus').textContent=model;$('modelSelect').value=model;
+  toast('Perfil neural',model+' selecionado.');
+}
+function toggleCinematic(force){
+  state.cinema=typeof force==='boolean'?force:!state.cinema;
+  localStorage.setItem('jarvis_cinema',state.cinema?'on':'off');
+  applyCinema();toast('Cinema',state.cinema?'Atmosfera cinematográfica ativada.':'Atmosfera reduzida.');
+}
+function applyCinema(){
+  document.documentElement.style.setProperty('--shadow',state.cinema?'0 35px 120px rgba(0,0,0,.62)':'0 22px 70px rgba(0,0,0,.45)');
+  $('cinemaStatus').textContent=state.cinema?'CINEMA':'NORMAL';
+  const n=document.querySelector('.noise');if(n)n.style.opacity=state.cinema?'.025':'.008';
+}
+function toggleSetting(btn,key){
+  btn.classList.toggle('on');
+  const on=btn.classList.contains('on');
+  if(key==='cinema'){state.cinema=on;localStorage.setItem('jarvis_cinema',on?'on':'off');applyCinema()}
+  if(key==='memory'){state.memory=on;localStorage.setItem('jarvis_memory',on?'on':'off');const m=$('memoryStatus');if(m)m.textContent=on?'ATIVA':'DESATIVADA'}
+  if(key==='autovoice'){state.autoVoice=on;localStorage.setItem('jarvis_autovoice',on?'on':'off')}
+  toast('Configuração',key+' '+(on?'ativado':'desativado')+'.');
+}
+function setScale(v){document.documentElement.style.fontSize=(v/100)+'px'}
+function resetSettings(){localStorage.removeItem('jarvis_cinema');localStorage.removeItem('jarvis_memory');localStorage.removeItem('jarvis_autovoice');location.reload()}
+
+function saveMemory(text){
+  state.memories.unshift({title:text,desc:'Nota criada por comando.',time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})});
+  state.memories=state.memories.slice(0,20);
+  localStorage.setItem('jarvis_memories',JSON.stringify(state.memories));renderMemory();
+  toast('Memória salva','O contexto foi registrado nesta demo.');
+}
+function renderMemory(){
+  const list=$('memoryList');if(!list)return;
+  const data=state.memories.length?state.memories:[{title:'Nenhuma memória criada ainda',desc:'Use “lembrar ...” no chat.',time:'—'}];
+  list.innerHTML=data.map((m,i)=>`<div class="memory"><div class="m-icon">◈</div><div><b>${escapeHtml(m.title)}</b><small>${escapeHtml(m.desc)} · ${escapeHtml(m.time)}</small></div><button onclick="deleteMemory(${i})">×</button></div>`).join('');
+}
+function deleteMemory(i){state.memories.splice(i,1);localStorage.setItem('jarvis_memories',JSON.stringify(state.memories));renderMemory()}
+function clearMemory(){state.memories=[];localStorage.removeItem('jarvis_memories');renderMemory();toast('Memória','Memória local de demonstração limpa.')}
+
+function useSkill(name){closeModal('skillsModal');switchView('chat');$('prompt').value='Ative a skill '+name+' e explique o que ela consegue fazer.';resizeComposer($('prompt'));sendMessage()}
+function useCommand(cmd){switchView('chat');$('prompt').value=cmd.replaceAll('"','');resizeComposer($('prompt'));toast('Comando carregado','Pressione enviar para executar.')}
+function copyCommands(){
+  navigator.clipboard?.writeText(commands.map(c=>c[0]+' — '+c[1]).join('\\n'));
+  toast('Comandos','Lista copiada para a área de transferência.');
+}
+function loadDemo(title){switchView('chat');$('prompt').value='Continue a conversa sobre '+title+'.';sendMessage()}
+
+function toast(title,text){
+  const stack=$('toastStack');const t=document.createElement('div');t.className='toast';t.innerHTML='<b>'+escapeHtml(title)+'</b><small>'+escapeHtml(text)+'</small>';stack.appendChild(t);
+  setTimeout(()=>t.remove(),3600);
+}
+function updateClock(){
+  const el=document.querySelector('.time');if(el)el.textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function fullscreen(){
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function escapeAttr(s){return String(s).replace(/'/g,"\\'")}
+
+
+/* ═══════════════ OPEN TOOLS ARSENAL — 30 ferramentas open source ═══════════════
+   APIs livres e abertas (sem chave) + utilitários locais 100% no navegador. */
+let currentTool=null, toolCat='Todos';
+
+async function otFetch(url){const r=await fetch(url);if(!r.ok)throw new Error('Serviço indisponível ('+r.status+')');return r.json()}
+function otFmt(n){return Number(n).toLocaleString('pt-BR')}
+function copyTool(txt){navigator.clipboard?.writeText(txt);toast('Copiado','Resultado na área de transferência.')}
+async function otTranslate(q,pair){try{const r=await otFetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(String(q).slice(0,450))+'&langpair='+encodeURIComponent(pair));return r.responseData?.translatedText||q}catch(e){return q}}
+
+const TOOLS=[
+/* ─── 🧠 CONHECIMENTO ─── */
+{id:'wiki',icon:'📚',name:'Wikipédia',cat:'🧠 Conhecimento',desc:'Resumo de qualquer tema (Wikipedia PT).',src:'wikipedia.org',
+ fields:[['q','Tema','Albert Einstein']],
+ run:async f=>{const d=await otFetch('https://pt.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(f.q)+'?redirect=true');
+  let out='<b style="font-size:15px">'+escapeHtml(d.title)+'</b>';
+  if(d.thumbnail)out+='<img class="tool-img" style="float:right;width:90px" src="'+d.thumbnail.source+'">';
+  out+='<p style="font-size:11px;line-height:1.7;color:#c9d4e4">'+escapeHtml(d.extract||'sem resumo')+'</p><a class="tool-link" href="'+d.content_urls?.desktop?.page+'" target="_blank">Abrir artigo completo ↗</a>';return out}},
+{id:'tradutor',icon:'🗣',name:'Tradutor',cat:'🧠 Conhecimento',desc:'Tradução grátis (MyMemory API).',src:'mymemory.translated.net',
+ fields:[['q','Texto','bom dia, tudo bem?'],['pair','Par de idiomas','en|pt']],
+ run:async f=>{const t=await otTranslate(f.q,f.pair||'en|pt');window._lastCopy=t;return '<p style="font-size:14px;line-height:1.7;color:var(--cyan)">'+escapeHtml(t)+'</p><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar</button>'}},
+{id:'dicionario',icon:'📖',name:'Dicionário EN',cat:'🧠 Conhecimento',desc:'Definições em inglês (Free Dictionary).',src:'dictionaryapi.dev',
+ fields:[['word','Palavra','house']],
+ run:async f=>{const d=await otFetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(f.word));
+  const w=d[0];let out='<b style="font-size:15px">'+escapeHtml(w.word)+'</b> <small style="color:var(--cyan)">'+(w.phonetic||'')+'</small>';
+  (w.meanings||[]).slice(0,3).forEach(m=>{out+='<div style="margin-top:8px"><small style="color:var(--violet)">◈ '+m.partOfSpeech+'</small>';
+   (m.definitions||[]).slice(0,2).forEach(x=>{out+='<p style="font-size:11px;margin:3px 0">— '+escapeHtml(x.definition)+'</p>'});out+='</div>'});return out}},
+{id:'livros',icon:'📕',name:'Busca de Livros',cat:'🧠 Conhecimento',desc:'Milhões de obras (Open Library).',src:'openlibrary.org',
+ fields:[['q','Busca','ficção científica']],
+ run:async f=>{const d=await otFetch('https://openlibrary.org/search.json?limit=6&q='+encodeURIComponent(f.q));
+  if(!d.docs?.length)throw new Error('Nada encontrado');
+  return d.docs.map(b=>'<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b style="font-size:12px">'+escapeHtml(b.title)+'</b><br><small style="color:var(--muted)">'+escapeHtml(b.author_name?.[0]||'autor desconhecido')+(b.first_publish_year?' · '+b.first_publish_year:'')+'</small></div>').join('')}},
+{id:'hn',icon:'📰',name:'Hacker News',cat:'🧠 Conhecimento',desc:'Notícias tech em tempo real (Algolia HN).',src:'hn.algolia.com',
+ fields:[['q','Tema','AI']],
+ run:async f=>{const d=await otFetch('https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=8&query='+encodeURIComponent(f.q));
+  if(!d.hits?.length)throw new Error('Nada encontrado');
+  return d.hits.map((h,i)=>'<div style="padding:6px 0;border-bottom:1px solid var(--line)"><small style="color:var(--cyan)">'+(i+1)+'.</small> <a class="tool-link" target="_blank" href="'+(h.url||'https://news.ycombinator.com/item?id='+h.objectID)+'">'+escapeHtml(h.title)+'</a><br><small style="color:var(--muted)">▲ '+otFmt(h.points)+' · '+otFmt(h.num_comments)+' comentários</small></div>').join('')}},
+/* ─── 🌍 MUNDO ─── */
+{id:'clima',icon:'🌦',name:'Clima agora',cat:'🌍 Mundo',desc:'Tempo real em qualquer cidade (Open-Meteo).',src:'open-meteo.com',
+ fields:[['city','Cidade','São Paulo']],
+ run:async f=>{const g=await otFetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=pt&name='+encodeURIComponent(f.city));
+  if(!g.results?.length)throw new Error('Cidade não encontrada');
+  const c=g.results[0];const w=await otFetch('https://api.open-meteo.com/v1/forecast?latitude='+c.latitude+'&longitude='+c.longitude+'&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code');
+  const map={0:'☀ céu limpo',1:'🌤 limpo',2:'⛅ parcialmente nublado',3:'☁ nublado',45:'🌫 neblina',48:'🌫 neblina gelada',51:'🌦 garoa leve',53:'🌦 garoa',55:'🌧 garoa forte',61:'🌧 chuva leve',63:'🌧 chuva',65:'🌧 chuva forte',71:'🌨 neve',80:'🌦 pancadas leves',81:'🌧 pancadas',82:'⛈ pancadas fortes',95:'⛈ tempestade',96:'⛈ tempestade com raios'};
+  const k=w.current;return '<b style="font-size:15px">'+escapeHtml(c.name)+(c.admin1?', '+c.admin1:'')+'</b><br><span style="font-size:36px;color:var(--cyan);font-weight:700">'+k.temperature_2m+'°C</span><br><small style="color:#c9d4e4">'+(map[k.weather_code]||'—')+' · 💧 '+k.relative_humidity_2m+'% · 💨 '+k.wind_speed_10m+' km/h</small>'}},
+{id:'paises',icon:'🌐',name:'Países',cat:'🌍 Mundo',desc:'Dados de qualquer país (REST Countries).',src:'restcountries.com',
+ fields:[['q','País','Brasil']],
+ run:async f=>{const d=await otFetch('https://restcountries.com/v3.1/name/'+encodeURIComponent(f.q)+'?fields=name,capital,population,region,flags,currencies');
+  const c=Array.isArray(d)?d[0]:d;let out='<img class="tool-img" style="width:110px;border-radius:8px" src="'+c.flags?.png+'">';
+  out+='<div style="margin-top:8px"><b style="font-size:15px">'+escapeHtml(c.name?.common||'')+'</b><br><small style="color:#c9d4e4">🗺 '+escapeHtml(c.region||'—')+' · 🏛 '+escapeHtml(c.capital?.[0]||'—')+' · 👥 '+otFmt(c.population||0)+'</small>';
+  if(c.currencies){const cur=Object.values(c.currencies)[0];out+='<br><small style="color:var(--muted)">💰 '+(cur?.name||'')+' ('+(cur?.symbol||'')+')</small>'}return out+'</div>'}},
+{id:'iss',icon:'🛰',name:'ISS ao vivo',cat:'🌍 Mundo',desc:'Posição da Estação Espacial agora.',src:'wheretheiss.at',
+ fields:[],
+ run:async f=>{const d=await otFetch('https://api.wheretheiss.at/v1/satellites/25544');
+  return '<b style="font-size:15px">🛰 ISS — posição ao vivo</b><div style="margin-top:8px;font-size:12px;line-height:2;color:#c9d4e4">📍 Lat '+d.latitude.toFixed(3)+'° · Lon '+d.longitude.toFixed(3)+'°<br>🚀 Velocidade '+otFmt(Math.round(d.velocity))+' km/h · Altitude '+Math.round(d.altitude)+' km</div><a class="tool-link" target="_blank" href="https://www.openstreetmap.org/?mlat='+d.latitude+'&mlon='+d.longitude+'#map=4/'+d.latitude+'/'+d.longitude+'">Ver no mapa ↗</a>'}},
+{id:'meuip',icon:'📡',name:'Meu IP',cat:'🌍 Mundo',desc:'Seu IP público e provedor (ipwho.is).',src:'ipwho.is',
+ fields:[],
+ run:async f=>{const d=await otFetch('https://ipwho.is/');
+  return '<b style="font-size:20px;color:var(--cyan)">'+d.ip+'</b><br><small style="color:#c9d4e4;line-height:2">'+escapeHtml(d.city||'')+', '+escapeHtml(d.country||'')+' · '+escapeHtml(d.connection?.isp||d.connection?.org||'')+'</small>'}},
+{id:'iplookup',icon:'🔎',name:'Rastrear IP',cat:'🌍 Mundo',desc:'Localize qualquer endereço IP (ipwho.is).',src:'ipwho.is',
+ fields:[['ip','Endereço IP','8.8.8.8']],
+ run:async f=>{const d=await otFetch('https://ipwho.is/'+encodeURIComponent(f.ip));
+  if(d.success===false)throw new Error('IP inválido');
+  return '<b style="font-size:14px">'+escapeHtml(d.ip)+'</b><br><small style="color:#c9d4e4;line-height:2">'+escapeHtml(d.city||'')+', '+escapeHtml(d.region||'')+' — '+escapeHtml(d.country||'')+' 🇧🇷<br>⏱ Fuso '+escapeHtml(d.timezone?.id||'')+' · 🏢 '+escapeHtml(d.connection?.isp||'')+'</small>'}},
+{id:'feriados',icon:'📅',name:'Próximos Feriados',cat:'🌍 Mundo',desc:'Feriados públicos por país (Nager.Date).',src:'date.nager.at',
+ fields:[['cc','Código do país','BR']],
+ run:async f=>{const d=await otFetch('https://date.nager.at/api/v3/NextPublicHolidays/'+(f.cc||'BR').toUpperCase());
+  if(!d.length)throw new Error('Sem dados para este país');
+  return d.slice(0,7).map(h=>'<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b style="font-size:12px;color:var(--cyan)">'+h.date.split('-').reverse().join('/')+'</b> — '+escapeHtml(h.name)+'<br><small style="color:var(--muted)">'+escapeHtml(h.localName||'')+'</small></div>').join('')}},
+/* ─── 💰 MERCADO ─── */
+{id:'moedas',icon:'💱',name:'Câmbio',cat:'💰 Mercado',desc:'Conversão com taxas reais (Frankfurter).',src:'frankfurter.app',
+ fields:[['amount','Valor','100'],['from','De','USD'],['to','Para','BRL']],
+ run:async f=>{const d=await otFetch('https://api.frankfurter.app/latest?amount='+(f.amount||'1')+'&from='+(f.from||'USD').toUpperCase()+'&to='+(f.to||'BRL').toUpperCase());
+  const v=Object.values(d.rates)[0];const pair=Object.keys(d.rates)[0];
+  return '<span style="font-size:26px;color:var(--cyan);font-weight:700">'+otFmt(v)+' '+pair+'</span><br><small style="color:#c9d4e4">'+otFmt(d.amount)+' '+d.base+' · taxa do '+d.date+'</small>'}},
+{id:'cripto',icon:'🪙',name:'Cripto',cat:'💰 Mercado',desc:'Preço de moedas digitais (CoinGecko).',src:'coingecko.com',
+ fields:[['id','ID da moeda','bitcoin']],
+ run:async f=>{const d=await otFetch('https://api.coingecko.com/api/v3/simple/price?ids='+encodeURIComponent(f.id||'bitcoin')+'&vs_currencies=usd,brl');
+  const c=d[f.id||'bitcoin'];if(!c)throw new Error('Moeda não encontrada (ex: bitcoin, ethereum, solana)');
+  return '<b style="font-size:14px;text-transform:uppercase">'+escapeHtml(f.id||'bitcoin')+'</b><br><span style="font-size:24px;color:var(--green);font-weight:700">US$ '+otFmt(c.usd)+'</span><br><small style="color:#c9d4e4">R$ '+otFmt(c.brl)+'</small>'}},
+/* ─── 🎨 DIVERSÃO ─── */
+{id:'pokemon',icon:'⚡',name:'Pokédex',cat:'🎨 Diversão',desc:'Ficha completa de Pokémon (PokéAPI).',src:'pokeapi.co',
+ fields:[['name','Pokémon','pikachu']],
+ run:async f=>{const d=await otFetch('https://pokeapi.co/api/v2/pokemon/'+encodeURIComponent((f.name||'pikachu').toLowerCase()));
+  return '<div style="text-align:center"><img src="'+d.sprites?.front_default+'" style="width:120px"><b style="font-size:16px;text-transform:capitalize">'+escapeHtml(d.name)+'</b> <span class="status-chip">Nº '+d.id+'</span><br><small style="color:var(--cyan)">'+d.types.map(t=>t.type.name).join(' · ')+'</small><br><small style="color:var(--muted)">📏 '+(d.height/10).toFixed(1)+' m · ⚖ '+(d.weight/10).toFixed(1)+' kg</small></div>'}},
+{id:'cachorro',icon:'🐶',name:'Doguinhos',cat:'🎨 Diversão',desc:'Foto aleatória (Dog CEO API).',src:'dog.ceo',
+ fields:[],
+ run:async f=>{const d=await otFetch('https://dog.ceo/api/breeds/image/random');return '<img class="tool-img" src="'+d.message+'"><small style="color:var(--muted)">'+d.message.split('/breeds/')[1]?.split('/')[0]?.replace('-',' ')||''+'</small>'}},
+{id:'gato',icon:'🐱',name:'Gatinhos',cat:'🎨 Diversão',desc:'Foto aleatória (Cat as a Service).',src:'cataas.com',
+ fields:[],
+ run:async f=>{return '<img class="tool-img" src="https://cataas.com/cat?width=420&r='+Date.now()+'">'}},
+{id:'piada',icon:'😂',name:'Piada',cat:'🎨 Diversão',desc:'Humor traduzido (JokeAPI + MyMemory).',src:'jokeapi.dev',
+ fields:[],
+ run:async f=>{const j=await otFetch('https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,religious,political,racist,sexist,explicit');
+  const raw=j.type==='single'?j.joke:j.setup+'\n\n'+j.delivery;const pt=await otTranslate(raw,'en|pt');
+  return '<p style="font-size:13px;line-height:1.8;color:#e2e9f5">'+escapeHtml(pt).replace(/\n\n/g,'<br><br>')+'</p><small style="color:var(--muted)">'+escapeHtml(raw.slice(0,80))+'…</small>'}},
+{id:'conselho',icon:'💡',name:'Conselho',cat:'🎨 Diversão',desc:'Sabedoria aleatória (Advice Slip).',src:'adviceslip.com',
+ fields:[],
+ run:async f=>{const d=await otFetch('https://api.adviceslip.com/advice?'+Date.now());const pt=await otTranslate(d.slip.advice,'en|pt');
+  return '<p style="font-size:14px;line-height:1.8;color:var(--amber)">"'+escapeHtml(pt)+'"</p><small style="color:var(--muted)">'+escapeHtml(d.slip.advice)+'</small>'}},
+{id:'paleta',icon:'🎨',name:'Paleta de Cores',cat:'🎨 Diversão',desc:'Paleta harmônica gerada localmente.',src:'local',
+ fields:[['n','Quantidade (2-8)','5']],
+ run:async f=>{const n=Math.min(8,Math.max(2,parseInt(f.n)||5));const h=Math.random()*360;window._lastCopy=[];
+  const cols=Array.from({length:n},(_,i)=>{const hex='#'+HSLtoHex((h+i*360/n)%360,70,55);window._lastCopy.push(hex);return '<div onclick="copyTool(window._lastCopy['+i+'])" style="cursor:pointer;background:'+hex+';border-radius:10px;height:64px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:9px ui-monospace">'+hex+'</div>'});
+  return '<div style="display:grid;grid-template-columns:repeat('+n+',1fr);gap:6px">'+cols.join('')+'</div><small style="color:var(--muted)">Toque em uma cor para copiar.</small>'}},
+{id:'lorem',icon:'📝',name:'Lorem Ipsum',cat:'🎨 Diversão',desc:'Texto de preenchimento gerado localmente.',src:'local',
+ fields:[['p','Parágrafos','2']],
+ run:async f=>{const words='lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum'.split(' ');
+  const n=parseInt(f.p)||2;window._lastCopy='';const paras=Array.from({length:n},()=>{const s=Array.from({length:14+Math.floor(Math.random()*20)},()=>words[Math.floor(Math.random()*words.length)]).join(' ');return s.charAt(0).toUpperCase()+s.slice(1)+'.'});
+  window._lastCopy=paras.join('\n\n');
+  return '<p style="font-size:11px;line-height:1.8;color:#c9d4e4">'+escapeHtml(paras.join('<br><br>'))+'</p><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar texto</button>'}},
+/* ─── 🛠 DEV ─── */
+{id:'github',icon:'🐙',name:'GitHub Scan',cat:'🛠 Dev',desc:'Repositórios de qualquer usuário (GitHub API).',src:'api.github.com',
+ fields:[['user','Usuário','nicolaswjwkwk']],
+ run:async f=>{const d=await otFetch('https://api.github.com/users/'+encodeURIComponent(f.user)+'/repos?sort=updated&per_page=7');
+  if(!d.length)throw new Error('Usuário sem repositórios públicos');
+  return d.map(r=>'<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b style="font-size:12px">📦 '+escapeHtml(r.name)+'</b> <span class="status-chip">★ '+otFmt(r.stargazers_count)+'</span><br><small style="color:var(--muted)">'+escapeHtml(r.description||'—')+'</small><br><small style="color:var(--cyan)">🔵 '+(r.language||'—')+' · 🍴 '+r.forks_count+'</small></div>').join('')}},
+{id:'qr',icon:'📷',name:'QR Code',cat:'🛠 Dev',desc:'Gere QR para links e textos (goqr.me).',src:'goqr.me',
+ fields:[['text','Conteúdo','https://github.com/nicolaswjwkwk/jarvis-hud-v2']],
+ run:async f=>{if(!f.text)throw new Error('Digite um conteúdo');return '<div style="text-align:center"><img class="tool-img" style="max-width:220px" src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data='+encodeURIComponent(f.text)+'"></div>'}},
+{id:'senha',icon:'🔐',name:'Senha Forte',cat:'🛠 Dev',desc:'Gerador criptográfico (Web Crypto).',src:'local',
+ fields:[['len','Tamanho (8-64)','20']],
+ run:async f=>{const len=Math.min(64,Math.max(8,parseInt(f.len)||20));const abc='abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*+-=';
+  const buf=new Uint32Array(len);crypto.getRandomValues(buf);const pw=[...buf].map(n=>abc[n%abc.length]).join('');
+  window._lastCopy=pw;return '<div class="code" style="font-size:15px;color:var(--green)">'+pw+'</div><small style="color:var(--muted)">'+len+' caracteres · aleatoriedade criptográfica</small><br><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar senha</button>'}},
+{id:'uuid',icon:'🆔',name:'UUID v4',cat:'🛠 Dev',desc:'Identificadores únicos (Web Crypto).',src:'local',
+ fields:[['n','Quantidade','5']],
+ run:async f=>{const n=Math.min(20,parseInt(f.n)||5);const ids=Array.from({length:n},()=>crypto.randomUUID());window._lastCopy=ids.join('\n');
+  return '<div class="code">'+ids.join('<br>')+'</div><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar</button>'}},
+{id:'base64',icon:'🔡',name:'Base64',cat:'🛠 Dev',desc:'Codificador e decodificador local.',src:'local',
+ fields:[['mode','Modo: encode | decode','encode'],['text','Texto','JARVIS X']],
+ run:async f=>{const t=f.text;if(!t)throw new Error('Digite um texto');
+  try{if(f.mode==='decode'){const out=decodeURIComponent(escape(atob(t.trim())));window._lastCopy=out;return '<div class="code">'+escapeHtml(out)+'</div><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar</button>'}
+  else{const out=btoa(unescape(encodeURIComponent(t)));window._lastCopy=out;return '<div class="code">'+escapeHtml(out)+'</div><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar</button>'}}
+  catch(e){throw new Error('Conteúdo Base64 inválido para decodificar')}}},
+{id:'sha',icon:'#️⃣',name:'Hash SHA-256',cat:'🛠 Dev',desc:'Impressão digital (Web Crypto).',src:'local',
+ fields:[['text','Texto','JARVIS X']],
+ run:async f=>{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(f.text));
+  const hex=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');window._lastCopy=hex;
+  return '<div class="code" style="color:var(--cyan)">'+hex+'</div><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar hash</button>'}},
+{id:'json',icon:'🧾',name:'JSON Format',cat:'🛠 Dev',desc:'Valida e formata JSON localmente.',src:'local',
+ fields:[['json','Cole o JSON','{"jarvis":"ok"}','textarea']],
+ run:async f=>{if(!f.json)throw new Error('Cole um JSON');
+  try{const o=JSON.parse(f.json);const out=JSON.stringify(o,null,2);window._lastCopy=out;
+   return '<div class="code" style="color:var(--green)">✓ JSON válido</div><div class="code">'+escapeHtml(out.slice(0,2000))+'</div><button class="secondary" onclick="copyTool(window._lastCopy)">⧉ Copiar formatado</button>'}
+  catch(e){throw new Error('JSON inválido: '+e.message)}}},
+{id:'regex',icon:'🔍',name:'Regex Tester',cat:'🛠 Dev',desc:'Testa expressões regulares localmente.',src:'local',
+ fields:[['pattern','Padrão (sem barras)','\\d+'],['flags','Flags','g'],['text','Texto de teste','Pedido 42 chega dia 7 às 15h','textarea']],
+ run:async f=>{const re=new RegExp(f.pattern||'',f.flags||'g');const matches=f.text.match(re);
+  return '<div class="code">✓ regex compilada</div><div style="margin-top:6px"><b style="font-size:12px">'+(matches?matches.length+' correspondência(s):':'nenhuma correspondência')+'</b><br><div class="code" style="color:var(--cyan)">'+escapeHtml((matches||[]).slice(0,30).join(' · '))+'</div></div>'}},
+/* ─── ⏱ PRODUTIVIDADE ─── */
+{id:'contador',icon:'🔢',name:'Contador de Texto',cat:'⏱ Produtividade',desc:'Palavras, caracteres e leitura.',src:'local',
+ fields:[['text','Cole o texto','','textarea']],
+ run:async f=>{const t=f.text||'';const words=t.trim()?t.trim().split(/\s+/).length:0;const mins=Math.max(1,Math.ceil(words/180));
+  return '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px"><div class="tool-stat"><b>'+otFmt(words)+'</b><small>palavras</small></div><div class="tool-stat"><b>'+otFmt(t.length)+'</b><small>caracteres</small></div><div class="tool-stat"><b>'+otFmt(t.split(/\n+/).filter(Boolean).length)+'</b><small>parágrafos</small></div><div class="tool-stat"><b>~'+mins+' min</b><small>tempo de leitura</small></div></div>'}},
+{id:'pomodoro',icon:'⏱',name:'Pomodoro',cat:'⏱ Produtividade',desc:'Timer de foco com alerta de voz.',src:'local',
+ fields:[],
+ run:async f=>{return '<div style="text-align:center"><div id="pomoStatus" style="font-size:34px;color:var(--cyan);font-weight:700;margin:6px 0">pronto</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="primary" onclick="startPomo(25)">▶ Foco 25min</button><button class="secondary" onclick="startPomo(5)">☕ Pausa 5min</button><button class="secondary" onclick="stopPomo()">■ Parar</button></div><small style="color:var(--muted)">Técnica Pomodoro · aviso por voz ao terminar</small></div>'}}
+];
+
+function HSLtoHex(h,s,l){s/=100;l/=100;const k=n=>(n+h/30)%12;const a=s*Math.min(l,1-l);const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('').toUpperCase()}
+let pomoTimer=null;
+function startPomo(min){clearInterval(pomoTimer);const end=Date.now()+min*60000;
+  const tick=()=>{const s=Math.max(0,Math.round((end-Date.now())/1000));const el=$('pomoStatus');if(el)el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+   if(s<=0){clearInterval(pomoTimer);if(el)el.textContent='✓ concluído';toast('Pomodoro','Ciclo de '+min+' minutos concluído!');try{speechSynthesis.speak(new SpeechSynthesisUtterance('Ciclo de '+min+' minutos concluído'))}catch(e){}}};
+  tick();pomoTimer=setInterval(tick,250)}
+function stopPomo(){clearInterval(pomoTimer);const el=$('pomoStatus');if(el)el.textContent='pronto'}
+
+const TOOL_CATS=['Todos',...new Set(TOOLS.map(t=>t.cat))];
+function buildOpenTools(){
+  const chips=$('toolChips');
+  if(chips)chips.innerHTML=TOOL_CATS.map(c=>'<button class="tool-chip'+(c===toolCat?' on':'')+'" onclick="toolCat=\''+c+'\';buildOpenTools();renderTools()">'+c+(c==='Todos'?' ('+TOOLS.length+')':'')+'</button>').join('');
+  renderTools();
+}
+function renderTools(){
+  const grid=$('toolGrid');if(!grid)return;
+  const q=($('toolSearch')?.value||'').toLowerCase();
+  const list=TOOLS.filter(t=>(toolCat==='Todos'||t.cat===toolCat)&&(!q||(t.name+' '+t.desc+' '+t.cat).toLowerCase().includes(q)));
+  grid.innerHTML=list.map(t=>'<div class="skill-tile" onclick="openTool(\''+t.id+'\')"><div class="big">'+t.icon+'</div><b>'+t.name+'</b><p>'+t.desc+'</p><button>▶ abrir</button></div>').join('')||'<p style="color:var(--muted)">Nenhuma ferramenta encontrada.</p>';
+}
+function openTool(id){
+  const t=TOOLS.find(x=>x.id===id);if(!t)return;currentTool=t;
+  $('toolModalTitle').innerHTML='<span style="font-size:18px">'+t.icon+'</span> '+t.name;
+  $('toolModalDesc').innerHTML=t.desc+' · fonte: <b style="color:var(--cyan)">'+t.src+'</b> · '+t.cat;
+  $('toolFields').innerHTML=t.fields.map(f=>'<label class="tool-label">'+f[1]+'<input class="select" id="tf_'+f[0]+'" placeholder="'+escapeAttr(f[2]||'')+'" value="'+escapeAttr(f[2]||'')+'"'+(f[3]==='textarea'?' style="min-height:90px;padding:10px;font-size:11px"':'')+'></label>').join('');
+  $('toolResult').innerHTML='<small style="color:var(--muted)">'+(t.fields.length?'Preencha os campos e execute.':'Pronto para executar.')+'</small>';
+  openModal('toolModal');
+}
+async function runTool(){
+  const t=currentTool;if(!t)return;
+  const data={};t.fields.forEach(f=>{data[f[0]]=($('tf_'+f[0])?.value||'').trim()});
+  const out=$('toolResult');out.innerHTML='<div class="tool-loading"><span class="live-dot" style="background:var(--cyan)"></span> consultando '+t.src+'…</div>';
+  try{out.innerHTML=await t.run(data)}catch(e){out.innerHTML='<div class="tool-error">✕ '+escapeHtml(e.message||'Falha ao consultar o serviço.')+'</div>'}
+}
+
+
+/* ═══════════════ AGENTE AUTÔNOMO OPEN SOURCE ═══════════════
+   Missões por conta própria: WhatsApp real (Evolution API no backend),
+   abrir apps no celular (deep links + QR) e pesquisa aberta. */
+const AGENT_SYS='Você é o módulo de execução autônoma do JARVIS. Dado um objetivo, responda APENAS um JSON válido, sem texto extra, no formato {"steps":[{"tool":"...","args":{...},"why":"..."}]}. Ferramentas: (1) tool "whatsapp", args {num:"55DDDNUMERO", text:"mensagem"} para enviar mensagem no WhatsApp; (2) tool "open_phone", args {app:"whatsapp|tel|maps|youtube|instagram|github|mail|spotify", num:"", text:"", query:"", user:"", email:""} para abrir algo no celular do usuário; (3) tool "web_lookup", args {q:"termo"} para buscar contexto aberto na Wikipédia; (4) tool "notify", args {text:"resumo final"} para encerrar. Use no máximo 4 passos e priorize ação concreta.';
+
+const DEEPLINKS={
+  whatsapp:{icon:'💬',name:'WhatsApp',build:a=>'https://wa.me/'+((a.num||'').replace(/\D/g,''))+'?text='+encodeURIComponent(a.text||'')},
+  tel:{icon:'📞',name:'Ligação',build:a=>'tel:'+(a.num||'')},
+  maps:{icon:'🗺',name:'Mapas',build:a=>'https://maps.google.com/?q='+encodeURIComponent(a.query||a.text||'')},
+  youtube:{icon:'▶',name:'YouTube',build:a=>'https://www.youtube.com/results?search_query='+encodeURIComponent(a.query||a.text||'')},
+  instagram:{icon:'📸',name:'Instagram',build:a=>'https://instagram.com/'+(a.user||'')},
+  github:{icon:'🐙',name:'GitHub',build:a=>'https://github.com/'+(a.user||'')},
+  mail:{icon:'✉',name:'E-mail',build:a=>'mailto:'+(a.email||'')+'?subject=JARVIS&body='+encodeURIComponent(a.text||'')},
+  spotify:{icon:'🎵',name:'Spotify',build:a=>'https://open.spotify.com/search/'+encodeURIComponent(a.query||a.text||'')}
+};
+
+function agentLogLine(icon,title,detail,extra){
+  const box=$('agentLog');if(!box)return;
+  const row=document.createElement('div');row.className='memory';
+  row.innerHTML='<div class="m-icon">'+icon+'</div><div><b>'+escapeHtml(title)+'</b><small>'+escapeHtml(detail||'')+'</small></div>';
+  if(extra){const ex=document.createElement('div');ex.style.cssText='margin:8px 0 4px 34px';ex.innerHTML=extra;row.appendChild(ex)}
+  box.prepend(row);
+}
+function clearAgentLog(){$('agentLog').innerHTML='';toast('Agente','Registro limpo.')}
+function agentOpenTile(link,label){
+  return '<a href="'+link+'" target="_blank" class="primary" style="display:inline-block;text-decoration:none;padding:8px 14px;margin-right:6px">📲 '+label+'</a>'+
+  '<img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=6&data='+encodeURIComponent(link)+'" style="vertical-align:middle;border-radius:10px" width="130" height="130" alt="QR para abrir no celular">'+
+  '<small style="display:block;margin-top:4px;color:var(--muted)">Abra a câmera do celular no QR ou toque no botão (com o site aberto no celular, abre direto o app).</small>';
+}
+function rulePlan(goal){
+  const g=goal.toLowerCase();const steps=[];
+  const num=(g.match(/\+?\d[\d\s-]{7,}/)||[])[0];
+  if(/whats|wpp/.test(g)||num){
+    steps.push({tool:'whatsapp',args:{num:num?num.replace(/\D/g,''):'',text:goal},why:'Enviar pelo WhatsApp'});
+  }
+  [[/youtube/,'youtube'],[/instagram/,'instagram'],[/mapa|rota|gps|navega/,'maps'],[/ligar|telefon/,'tel'],[/github/,'github'],[/spotify|música|musica/,'spotify'],[/e-?mail/,'mail']].forEach(pair=>{if(pair[0].test(g))steps.push({tool:'open_phone',args:{app:pair[1],text:goal,num:num?num.replace(/\D/g,''):''},why:'Abrir '+pair[1]+' no celular'})});
+  if(!steps.length)steps.push({tool:'web_lookup',args:{q:goal},why:'Coletar contexto aberto na Wikipédia'});
+  steps.push({tool:'notify',args:{text:'Missão concluída: '+goal},why:'Encerrar e notificar'});
+  return {steps:steps.slice(0,5)};
+}
+async function agentWhatsApp(args){
+  const url=agentBackendUrl();
+  if(url&&args.num){
+    try{
+      const r=await fetch(url.replace(/\/+$/,'')+'/api/whatsapp/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:args.num,text:args.text})});
+      const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.ok){agentLogLine('✅','WhatsApp enviado','Entregue pelo servidor (Evolution API): '+args.num);return}
+      agentLogLine('⚠','Servidor recusou','Detalhe: '+(d.detail||r.status)+' — caindo para link direto');
+    }catch(e){agentLogLine('⚠','Servidor offline','Sem backend em '+url+' — usando link direto (wa.me)')}
+  }
+  const link=DEEPLINKS.whatsapp.build(args);
+  agentLogLine('💬','WhatsApp — abrir no celular',(args.num?'para '+args.num:'sem número informado')+' · mensagem: '+(args.text||'').slice(0,60),agentOpenTile(link,'Abrir WhatsApp'));
+}
+async function agentOpenPhone(args){
+  const dl=DEEPLINKS[args.app]||DEEPLINKS.whatsapp;
+  const link=dl.build(args);
+  agentLogLine(dl.icon,'Abrir '+dl.name+' no celular',link.slice(0,80),agentOpenTile(link,'Abrir '+dl.name));
+  try{window.open(link,'_blank')}catch(e){}
+}
+async function agentLookup(args){
+  try{
+    const d=await (await fetch('https://pt.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(args.q||'')+'?redirect=true')).json();
+    agentLogLine('📚','Pesquisa aberta','Wikipédia: '+(d.title||'sem resultado'),'<small style="display:block;color:#c9d4e4;line-height:1.6;padding:4px 0 2px 34px">'+escapeHtml((d.extract||'').slice(0,220))+'</small>');
+  }catch(e){agentLogLine('⚠','Pesquisa falhou','Serviço indisponível')}
+}
+async function runAgent(){
+  const goal=($('agentGoal').value||'').trim();
+  if(!goal){toast('Agente','Descreva o objetivo da missão.');return}
+  const bk=agentBackendUrl();if(bk)localStorage.setItem('jarvis_backend_url',bk);
+  agentLogLine('🎯','Missão recebida',goal);
+  agentLogLine('🧠','Planejamento',apiReady()?'usando o modelo IA conectado':'modo local (sem IA conectada, regras fixas)');
+  let plan;
+  if(apiReady()){
+    try{
+      const raw=await callRealAI('Objetivo: '+goal+'\n\nDevolva o JSON dos passos.');
+      const m=raw.match(/\{[\s\S]*\}/);
+      plan=m?JSON.parse(m[0]):rulePlan(goal);
+    }catch(e){plan=rulePlan(goal)}
+  }else{plan=rulePlan(goal)}
+  for(const s of (plan.steps||[]).slice(0,6)){
+    agentLogLine('⚙','Executando',(s.tool||'?')+' — '+(s.why||''));
+    try{
+      if(s.tool==='whatsapp')await agentWhatsApp(s.args||{});
+      else if(s.tool==='open_phone')await agentOpenPhone(s.args||{});
+      else if(s.tool==='web_lookup')await agentLookup(s.args||{});
+      else if(s.tool==='notify'){agentLogLine('🔔','Encerrado',s.args?.text||goal);toast('Agente Autônomo',s.args?.text||'Missão concluída');speak(s.args?.text||'Missão concluída, mestre.')}
+    }catch(e){agentLogLine('✕','Falha no passo',e.message||'erro')}
+  }
+  toast('Agente Autônomo','Missão executada ('+((plan.steps||[]).length)+' passos).');
+}
+
+
+
+/* ═══════════════ CATÁLOGO DE MODELOS (aba Modelos) ═══════════════ */
+const MODELS_CATALOG=[
+ // OpenCode Zen — free, sem chave
+ {p:'zen',m:'nvidia/nemotron-3-ultra-550b-a55b',n:'Nemotron 3 Ultra',t:'FREE',d:'raciocínio · MoE 550B · agentes'},
+ {p:'zen',m:'inclusionai/ling-3.0-flash-fin',n:'Ling 3.0 Flash Fin',t:'FREE',d:'financeiro · 256K contexto'},
+ {p:'zen',m:'meta/muse-spark-1.3',n:'Muse Spark 1.3',t:'FREE',d:'agentic coding · Meta MSL'},
+ {p:'zen',m:'deepseek/deepseek-v4',n:'DeepSeek V4',t:'FREE',d:'código + raciocínio'},
+ {p:'zen',m:'zai/glm-5.3',n:'GLM-5.3',t:'FREE',d:'agente geral'},
+ // OpenRouter — free
+ {p:'openrouter',m:'meta-llama/llama-3.1-8b-instruct:free',n:'Llama 3.1 8B',t:'FREE',d:'leve e rápido'},
+ {p:'openrouter',m:'meta-llama/llama-3.3-70b-instruct:free',n:'Llama 3.3 70B',t:'FREE',d:'forte e equilibrado'},
+ {p:'openrouter',m:'mistralai/mistral-nemo:free',n:'Mistral Nemo',t:'FREE',d:'12B eficiente'},
+ {p:'openrouter',m:'deepseek/deepseek-r1:free',n:'DeepSeek R1',t:'FREE',d:'raciocínio profundo'},
+ {p:'openrouter',m:'inclusionai/ling-3.0-flash-fin:free',n:'Ling 3.0 Flash Fin',t:'FREE',d:'financeiro · Ant Group'},
+ {p:'openrouter',m:'nvidia/nemotron-3-ultra-550b-a55b:free',n:'Nemotron 3 Ultra',t:'FREE',d:'frontier reasoning'},
+ {p:'openrouter',m:'nvidia/nemotron-3.5-lightning:free',n:'Nemotron 3.5 Lightning',t:'FREE',d:'throughput para agentes'},
+ {p:'openrouter',m:'meta/muse-spark-1.3',n:'Muse Spark 1.3',t:'FREE',d:'coding de longo horizonte'},
+ {p:'openrouter',m:'qwen/qwen-2.5-72b-instruct:free',n:'Qwen 2.5 72B',t:'FREE',d:'multilíngue'},
+ {p:'openrouter',m:'google/gemma-3-27b-it:free',n:'Gemma 3 27B',t:'FREE',d:'Google open'},
+ {p:'openrouter',m:'microsoft/phi-4:free',n:'Phi-4',t:'FREE',d:'pequeno e esperto'},
+ // OpenRouter — pagos
+ {p:'openrouter',m:'openai/gpt-5',n:'GPT-5',t:'PAGO',d:'OpenAI topo de linha'},
+ {p:'openrouter',m:'openai/gpt-5-mini',n:'GPT-5 Mini',t:'PAGO',d:'rápido e barato'},
+ {p:'openrouter',m:'anthropic/claude-sonnet-4.5',n:'Claude Sonnet 4.5',t:'PAGO',d:'código e texto'},
+ {p:'openrouter',m:'google/gemini-3-pro',n:'Gemini 3 Pro',t:'PAGO',d:'multimodal Google'},
+ {p:'openrouter',m:'google/gemini-3-flash',n:'Gemini 3 Flash',t:'PAGO',d:'veloz multimodal'},
+ {p:'openrouter',m:'x-ai/grok-4',n:'Grok 4',t:'PAGO',d:'xAI'},
+ {p:'openrouter',m:'zai/glm-5.3',n:'GLM-5.3',t:'PAGO',d:'agente robusto'},
+ {p:'openrouter',m:'meta-llama/llama-4-maverick',n:'Llama 4 Maverick',t:'PAGO',d:'Meta frontier'},
+ {p:'openrouter',m:'qwen/qwen3-max',n:'Qwen3 Max',t:'PAGO',d:'Alibaba topo'},
+ {p:'openrouter',m:'mistralai/mistral-large-2',n:'Mistral Large 2',t:'PAGO',d:'Europa'},
+ // Groq — free tier
+ {p:'groq',m:'openai/gpt-oss-20b',n:'GPT-OSS 20B',t:'FREE',d:'ultra rápido'},
+ {p:'groq',m:'openai/gpt-oss-120b',n:'GPT-OSS 120B',t:'FREE',d:'open weights forte'},
+ {p:'groq',m:'qwen/qwen3.8-27b',n:'Qwen 3.8 27B',t:'FREE',d:'equilibrado'},
+ {p:'groq',m:'llama-3.3-70b-versatile',n:'Llama 3.3 70B',t:'FREE',d:'versátil'},
+ // Cerebras — free tier
+ {p:'cerebras',m:'llama3.1-8b',n:'Llama 3.1 8B',t:'FREE',d:'latência mínima'},
+ {p:'cerebras',m:'llama-3.3-70b',n:'Llama 3.3 70B',t:'FREE',d:'silício wafer-scale'},
+ {p:'cerebras',m:'gpt-oss-120b',n:'GPT-OSS 120B',t:'FREE',d:'open weights'},
+ // NVIDIA NIM
+ {p:'nvidia',m:'meta/llama-3.1-8b-instruct',n:'Llama 3.1 8B',t:'FREE',d:'credits grátis'},
+ {p:'nvidia',m:'meta/llama-3.3-70b-instruct',n:'Llama 3.3 70B',t:'FREE',d:'credits grátis'},
+ {p:'nvidia',m:'qwen/qwen2.5-coder-32b-instruct',n:'Qwen 2.5 Coder 32B',t:'FREE',d:'código'},
+ {p:'nvidia',m:'nvidia/llama-3.3-nemotron-super-49b-v1',n:'Nemotron Super 49B',t:'FREE',d:'raciocínio médio'},
+ {p:'nvidia',m:'nvidia/nemotron-3-ultra-550b-a55b',n:'Nemotron 3 Ultra',t:'FREE',d:'orchestration MoE'},
+ {p:'nvidia',m:'nvidia/nemotron-3.5-lightning',n:'Nemotron 3.5 Lightning',t:'FREE',d:'throughput'},
+ // Mistral
+ {p:'mistral',m:'open-mistral-nemo',n:'Mistral Nemo',t:'FREE',d:'plano grátis'},
+ {p:'mistral',m:'mistral-small-latest',n:'Mistral Small',t:'PAGO',d:'custo baixo'},
+ {p:'mistral',m:'mistral-large-latest',n:'Mistral Large',t:'PAGO',d:'topo Mistral'},
+ // AI/ML API
+ {p:'aiml',m:'space-bunny-alpha',n:'Space Bunny Alpha',t:'PAGO',d:'stealth · 1M ctx'},
+ {p:'aiml',m:'inclusionai/ling-3.0-flash-fin',n:'Ling 3.0 Flash Fin',t:'PAGO',d:'financeiro'},
+ {p:'aiml',m:'zai/glm-5.3',n:'GLM-5.3',t:'PAGO',d:'agente'},
+ // Xiaomi MiMo
+ {p:'mimo',m:'mimo-v2.6-flash',n:'MiMo-V2.6-Flash',t:'PAGO',d:'1M tokens · multimodal'},
+ {p:'mimo',m:'mimo-v2.6-pro',n:'MiMo-V2.6-Pro',t:'PAGO',d:'Token Plan barato'},
+ // Ollama — local
+ {p:'ollama',m:'llama3.2',n:'Llama 3.2',t:'LOCAL',d:'padrão leve'},
+ {p:'ollama',m:'llama3.3',n:'Llama 3.3',t:'LOCAL',d:'local forte'},
+ {p:'ollama',m:'qwen2.5:14b',n:'Qwen 2.5 14B',t:'LOCAL',d:'local PT-BR bom'},
+ {p:'ollama',m:'qwen2.5:0.5b',n:'Qwen 2.5 0.5B',t:'LOCAL',d:'mínimo de RAM'},
+ {p:'ollama',m:'gpt-oss:20b',n:'GPT-OSS 20B',t:'LOCAL',d:'open weights OpenAI'},
+ {p:'ollama',m:'gemma3:12b',n:'Gemma 3 12B',t:'LOCAL',d:'Google local'},
+ {p:'ollama',m:'phi4-mini',n:'Phi-4 Mini',t:'LOCAL',d:'Microsoft mini'},
+ // LM Studio
+ {p:'lmstudio',m:'local-gguf',n:'Qualquer GGUF',t:'LOCAL',d:'roda no LM Studio'}
+];
+const MODEL_PROVIDERS={zen:['OpenCode Zen','open source · sem chave'],openrouter:['OpenRouter','grátis (:free) + pagos'],groq:['Groq','free tier rápido'],cerebras:['Cerebras','free tier veloz'],nvidia:['NVIDIA NIM','créditos grátis'],mistral:['Mistral','free tier'],aiml:['AI/ML API','Space Bunny'],mimo:['Xiaomi MiMo','1M tokens'],ollama:['Ollama','local · sem chave'],lmstudio:['LM Studio','local']};
+let modelFilter='';
+function modelTag(t){const c=t==='FREE'?'#65f6b0':t==='LOCAL'?'#69e8ff':'#ffc76a';return '<span class="status-chip" style="color:'+c+';border-color:'+c+';margin-left:auto">'+t+'</span>'}
+function buildModelos(){
+  const q=(modelFilter||'').toLowerCase();
+  const groups={};
+  MODELS_CATALOG.forEach(x=>{
+    if(q&&!(x.n.toLowerCase().includes(q)||x.m.toLowerCase().includes(q)||MODEL_PROVIDERS[x.p][0].toLowerCase().includes(q)))return;
+    (groups[x.p]=groups[x.p]||[]).push(x);
+  });
+  let total=0;
+  const html=Object.keys(MODEL_PROVIDERS).filter(p=>groups[p]&&groups[p].length).map(p=>{
+    const [label,note]=MODEL_PROVIDERS[p];
+    const cards=groups[p].map(x=>{
+      total++;
+      const active=(state.api.provider===x.p&&state.api.model===x.m);
+      return '<div class="tool-stat" style="text-align:left;display:flex;align-items:center;gap:8px;padding:10px 12px;'+(active?'border-color:var(--cyan);box-shadow:inset 0 0 18px rgba(105,232,255,.08)':'')+'">'+
+        '<div style="min-width:0;flex:1"><b style="font-size:11px;color:#eaf6ff">'+x.n+'</b><br><small style="color:var(--muted);font-size:8px;word-break:break-all">'+x.m+'</small><br><small style="color:var(--muted);font-size:8px">'+x.d+'</small></div>'+
+        modelTag(x.t)+'<button class="'+(active?'secondary':'primary')+'" style="padding:5px 10px;font-size:9px;white-space:nowrap" onclick="useModel(\''+x.p+'\',\''+String(x.m).replace(/'/g,"\\'")+'\')">'+(active?'ativo ✓':'usar')+'</button></div>';
+    }).join('');
+    return '<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:12px;color:var(--cyan)">'+label+'</b><small style="color:var(--muted);font-size:9px">'+note+' · '+groups[p].length+' modelos</small></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px">'+cards+'</div></div>';
+  }).join('');
+  $('modelGrid').innerHTML=html||'<p style="color:var(--muted);font-size:11px">Nada encontrado para essa busca.</p>';
+  $('modelCount').textContent=total+' modelos';
+}
+function useModel(p,m){
+  if($('modelStatus'))$('modelStatus').textContent=m;
+  state.api=state.api||{};
+  state.api.provider=p;state.api.model=m;
+  if(p==='custom')state.api.url=state.api.url||'';
+  localStorage.setItem('jarvis_api_provider',p);
+  localStorage.setItem('jarvis_api_model',m);
+  const sel=$('apiProvider');if(sel){sel.value=p;fillModelSuggestion(p);const s=$('apiModelSelect');if([...s.options].some(o=>o.value===m))s.value=m}
+  updateAiStatus();updateAgentBrain();buildModelos();buildChatModelBar();
+  const needsKey=!['ollama','lmstudio','zen'].includes(p);
+  toast('Modelo selecionado',p+' · '+m+(needsKey&&!state.api.key?' — falta a chave nas Configurações':''));
+}
+
+
+
+/* ── Backend único do JARVIS (login Google, WhatsApp, voz) ── */
+function jarvisBackendUrl(){return (localStorage.getItem('jarvis_backend_url')||'').trim()}
+function saveJarvisBackend(v){
+  localStorage.setItem('jarvis_backend_url',(v||'').trim());
+  refreshBackendPreviews();refreshVoiceStatus();
+}
+function refreshBackendPreviews(){
+  const u=jarvisBackendUrl();
+  const a=$('agentBackendPreview');if(a)a.textContent=u?('atual: '+u):'nenhum configurado ainda';
+  const v=$('voiceBackendPreview');if(v){v.textContent=u?('configurado: '+u):'não configurado';v.style.color=u?'#65f6b0':'#69e8ff'}
+  const g=$('googleLoginHint');
+  if(g && !state.google) g.textContent=u?'Backend pronto — clique para entrar com sua conta Google.':'Configure o Backend do JARVIS acima antes de entrar.';
+}
+function agentBackendUrl(){return jarvisBackendUrl()}
+
+/* ── Login Google real (popup + sessão persistente no backend) ── */
+function updateProfileUI(){
+  const g=state.google;
+  const av=$('profileAvatar'),nm=$('profileName'),sb=$('profileSub'),btn=$('googleLoginBtn'),hint=$('googleLoginHint');
+  if(g&&g.user){
+    if(av)av.innerHTML=g.user.picture?'<img src="'+g.user.picture+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">':(g.user.name||'G')[0].toUpperCase();
+    if(nm)nm.textContent=g.user.name||g.user.email||'Conta Google';
+    if(sb)sb.textContent=g.user.email||'logado via Google';
+    if(btn){btn.textContent='Sair da conta';btn.onclick=logoutGoogle;btn.className='secondary'}
+    if(hint)hint.textContent='Conectado como '+(g.user.email||g.user.name||'')+' · sessão salva no backend.';
+  }else{
+    if(av)av.textContent='M';
+    if(nm)nm.textContent='Master User';
+    if(sb)sb.textContent='acesso completo';
+    if(btn){btn.textContent='Entrar com Google';btn.onclick=loginGoogle;btn.className='primary'}
+    refreshBackendPreviews();
+  }
+}
+async function loginGoogle(){
+  const base=jarvisBackendUrl();
+  if(!base){toast('Login Google','Configure o Backend do JARVIS em Configurações primeiro.');switchView('settings');return}
+  let url;
+  try{
+    const r=await fetch(base.replace(/\/+$/,'')+'/auth/google/start',{method:'POST'});
+    const d=await r.json();
+    if(!d.ok)throw new Error(d.detail||'Google OAuth não configurado no backend.');
+    url=d.url;
+  }catch(e){toast('Login Google','Falha ao iniciar: '+e.message);return}
+  const popup=window.open(url,'jarvis_google_login','width=480,height=640');
+  if(!popup){toast('Login Google','Permita pop-ups para entrar com o Google.');return}
+  toast('Login Google','Faça login na janela que abriu…');
+}
+window.addEventListener('message',(e)=>{
+  const d=e.data;
+  if(!d||d.type!=='jarvis_google_login')return;
+  const p=d.payload;
+  if(!p||!p.ok){toast('Login Google',(p&&p.error)||'Login cancelado.');return}
+  state.google={session_token:p.session_token,user:p.user};
+  localStorage.setItem('jarvis_google_session',JSON.stringify(state.google));
+  updateProfileUI();
+  toast('Login Google','Bem-vindo, '+(p.user.name||p.user.email)+'!');
+});
+async function logoutGoogle(){
+  const base=jarvisBackendUrl();
+  if(base&&state.google&&state.google.session_token){
+    try{await fetch(base.replace(/\/+$/,'')+'/api/session/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:state.google.session_token})})}catch(e){}
+  }
+  state.google=null;localStorage.removeItem('jarvis_google_session');
+  updateProfileUI();
+  toast('Login Google','Sessão encerrada.');
+}
+
+
+/* ═══════════════ CATÁLOGO DE EXTENSÕES OPEN SOURCE (repos reais) ═══════════════ */
+const EXT_CATALOG=[
+ {c:'🧠 Cérebro local',n:'Ollama',r:'ollama/ollama',d:'servidor de LLM local, já é o cérebro do JARVIS'},
+ {c:'🧠 Cérebro local',n:'llama.cpp',r:'ggml-org/llama.cpp',d:'motor de inferência C++, base de tudo isso'},
+ {c:'🧠 Cérebro local',n:'vLLM',r:'vllm-project/vllm',d:'serve LLMs com throughput alto (GPU)'},
+ {c:'🧠 Cérebro local',n:'text-generation-webui',r:'oobabooga/text-generation-webui',d:'interface completa pra rodar modelos locais'},
+ {c:'🧠 Cérebro local',n:'LocalAI',r:'mudler/LocalAI',d:'API compatível com OpenAI, 100% local'},
+ {c:'🧠 Cérebro local',n:'Jan',r:'janhq/jan',d:'app desktop de IA local, alternativa ao LM Studio'},
+ {c:'🧠 Cérebro local',n:'GPT4All',r:'nomic-ai/gpt4all',d:'chat local rodando em CPU comum'},
+ {c:'🧠 Cérebro local',n:'LiteLLM',r:'BerriAI/litellm',d:'unifica 100+ provedores numa API só'},
+ {c:'🧠 Cérebro local',n:'KoboldCpp',r:'LostRuins/koboldcpp',d:'servidor de LLM leve, focado em GGUF'},
+ {c:'🤖 Agentes',n:'OpenCode',r:'sst/opencode',d:'agente de código open source (base do provedor Zen)'},
+ {c:'🤖 Agentes',n:'LangChain',r:'langchain-ai/langchain',d:'framework padrão pra orquestrar agentes e ferramentas'},
+ {c:'🤖 Agentes',n:'LangGraph',r:'langchain-ai/langgraph',d:'fluxos de agente com estado e loops'},
+ {c:'🤖 Agentes',n:'CrewAI',r:'crewAIInc/crewAI',d:'vários agentes trabalhando em equipe'},
+ {c:'🤖 Agentes',n:'AutoGPT',r:'Significant-Gravitas/AutoGPT',d:'agente autônomo clássico, executa metas sozinho'},
+ {c:'🤖 Agentes',n:'BabyAGI',r:'yoheinakajima/babyagi',d:'loop simples de planejar → executar → priorizar'},
+ {c:'🤖 Agentes',n:'MetaGPT',r:'FoundationAgents/MetaGPT',d:'time de agentes que vira empresa de software'},
+ {c:'🤖 Agentes',n:'OpenHands',r:'All-Hands-AI/OpenHands',d:'agente que programa, roda comandos e navega sozinho'},
+ {c:'🤖 Agentes',n:'Aider',r:'Aider-AI/aider',d:'agente de código no terminal, edita seu repo direto'},
+ {c:'🤖 Agentes',n:'SuperAGI',r:'TransformerOptimus/SuperAGI',d:'framework de agentes com painel visual'},
+ {c:'🤖 Agentes',n:'browser-use',r:'browser-use/browser-use',d:'agente que controla o navegador de verdade — encaixa no Agente Autônomo'},
+ {c:'🤖 Agentes',n:'AgentGPT',r:'reworkd/AgentGPT',d:'monta e roda agentes autônomos no navegador'},
+ {c:'🗣 Voz real',n:'Piper',r:'OHF-voice/piper1-gpl',d:'TTS leve, roda até em Raspberry Pi'},
+ {c:'🗣 Voz real',n:'Coqui TTS / XTTS-v2',r:'coqui-ai/TTS',d:'clonagem de voz local de alta qualidade'},
+ {c:'🗣 Voz real',n:'F5-TTS',r:'SWivid/F5-TTS',d:'voz clonada natural, bom em PT-BR'},
+ {c:'🗣 Voz real',n:'Kokoro',r:'hexgrad/kokoro',d:'TTS rápido e leve, ótimo pra agente em tempo real'},
+ {c:'🗣 Voz real',n:'Bark',r:'suno-ai/bark',d:'TTS generativo, entoação bem humana'},
+ {c:'🗣 Voz real',n:'whisper.cpp',r:'ggml-org/whisper.cpp',d:'transcrição de voz offline, roda em CPU'},
+ {c:'🗣 Voz real',n:'faster-whisper',r:'SYSTRAN/faster-whisper',d:'Whisper 4x mais rápido pra ouvir comandos de voz'},
+ {c:'🗣 Voz real',n:'RVC',r:'RVC-Project/Retrieval-based-Voice-Conversion-WebUI',d:'converte qualquer voz pra outra (clonagem em tempo real)'},
+ {c:'🗣 Voz real',n:'OpenVoice',r:'myshell-ai/OpenVoice',d:'clonagem de voz instantânea'},
+ {c:'🔀 Automação',n:'n8n',r:'n8n-io/n8n',d:'automação visual tipo Zapier, self-hosted'},
+ {c:'🔀 Automação',n:'Node-RED',r:'node-red/node-red',d:'fluxos visuais leves, ótimo pra IoT'},
+ {c:'🔀 Automação',n:'Home Assistant',r:'home-assistant/core',d:'central de casa inteligente — o JARVIS pode virar o cérebro dela'},
+ {c:'🔀 Automação',n:'ESPHome',r:'esphome/esphome',d:'transforma ESP32/ESP8266 em sensores conectados ao JARVIS'},
+ {c:'🔀 Automação',n:'Huginn',r:'huginn/huginn',d:'agentes que monitoram a web e disparam ações (tipo IFTTT)'},
+ {c:'💬 Mensagens',n:'Baileys',r:'WhiskeySockets/Baileys',d:'lib de WhatsApp Web mais usada — alternativa à Evolution API'},
+ {c:'💬 Mensagens',n:'whatsapp-web.js',r:'pedroslopez/whatsapp-web.js',d:'outra lib madura de WhatsApp Web em Node'},
+ {c:'💬 Mensagens',n:'Evolution API',r:'EvolutionAPI/evolution-api',d:'já é a base do envio real de WhatsApp do JARVIS'},
+ {c:'💬 Mensagens',n:'venom-bot',r:'orkestral/venom',d:'bot de WhatsApp com suporte a mídia rica'},
+ {c:'💬 Mensagens',n:'python-telegram-bot',r:'python-telegram-bot/python-telegram-bot',d:'pra levar o JARVIS pro Telegram também'},
+ {c:'🌐 Navegador',n:'Playwright',r:'microsoft/playwright',d:'controla navegador de verdade (cliques, forms, prints)'},
+ {c:'🌐 Navegador',n:'Puppeteer',r:'puppeteer/puppeteer',d:'automação de Chrome/Chromium via Node'},
+ {c:'🌐 Navegador',n:'Stagehand',r:'browserbase/stagehand',d:'automação de navegador guiada por IA em linguagem natural'},
+ {c:'🔎 Sem chave',n:'SearXNG',r:'searxng/searxng',d:'motor de busca próprio, sem rastreio, sem chave de API'},
+ {c:'🔎 Sem chave',n:'LibreTranslate',r:'LibreTranslate/LibreTranslate',d:'tradução própria self-hosted, zero custo por requisição'},
+ {c:'🧮 Memória',n:'ChromaDB',r:'chroma-core/chroma',d:'banco vetorial simples pra memória de longo prazo do agente'},
+ {c:'🧮 Memória',n:'Qdrant',r:'qdrant/qdrant',d:'banco vetorial rápido, em Rust'},
+ {c:'🧮 Memória',n:'FAISS',r:'facebookresearch/faiss',d:'busca por similaridade da Meta, usada por muitos agentes'},
+ {c:'🧮 Memória',n:'Weaviate',r:'weaviate/weaviate',d:'banco vetorial com busca híbrida (texto + semântica)'},
+ {c:'📱 Ponte celular',n:'KDE Connect',r:'KDE/kdeconnect-kde',d:'liga o celular ao PC: notificações, controle remoto, arquivos'},
+ {c:'📱 Ponte celular',n:'ntfy',r:'binwiederhier/ntfy',d:'notificações push reais no celular, self-hosted e sem chave'},
+ {c:'📱 Ponte celular',n:'Gotify',r:'gotify/server',d:'outro servidor de push self-hosted, mais simples'},
+ {c:'📱 Ponte celular',n:'Syncthing',r:'syncthing/syncthing',d:'sincroniza arquivos entre celular e PC sem nuvem'},
+ {c:'📱 Ponte celular',n:'Termux',r:'termux/termux-app',d:'terminal Linux no Android — roda o backend do JARVIS no próprio celular'},
+ {c:'👁 Visão',n:'Tesseract',r:'tesseract-ocr/tesseract',d:'OCR clássico, leitura de texto em imagens'},
+ {c:'👁 Visão',n:'EasyOCR',r:'JaidedAI/EasyOCR',d:'OCR simples com suporte a 80+ idiomas'},
+ {c:'👁 Visão',n:'PaddleOCR',r:'PaddlePaddle/PaddleOCR',d:'OCR rápido e preciso, ótimo pra print de tela'},
+ {c:'🎵 Música',n:'OpenTune-Web',r:'Arturo254/OpenTune-Web',d:'player de música web open source (opentune.netlify.app) — dá pra plugar um player real no JARVIS'},
+ {c:'🖥 Interface web',n:'Open WebUI',r:'open-webui/open-webui',d:'interface de chat tipo ChatGPT, suporta Ollama e API OpenAI — 153k estrelas, referência direta pro JARVIS'},
+ {c:'📚 Referência',n:'OpenAI Cookbook',r:'openai/openai-cookbook',d:'guias e exemplos oficiais de uso de API compatível com OpenAI (útil pra novos provedores do seletor)'}
+];
+function buildExtensoes(){
+  const q=(document.getElementById('extSearch')?.value||'').toLowerCase();
+  const groups={};
+  EXT_CATALOG.forEach(x=>{
+    if(q&&!(x.n.toLowerCase().includes(q)||x.d.toLowerCase().includes(q)||x.c.toLowerCase().includes(q)||x.r.toLowerCase().includes(q)))return;
+    (groups[x.c]=groups[x.c]||[]).push(x);
+  });
+  let total=0;
+  const bodyHtml=Object.keys(groups).map(c=>{
+    const cards=groups[c].map(x=>{
+      total++;
+      return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;text-align:left;display:flex;align-items:center;gap:8px;padding:10px 12px">'+
+        '<div style="min-width:0;flex:1"><b style="font-size:11px;color:#eaf6ff">'+x.n+'</b><br><small style="color:var(--muted);font-size:9px">'+x.d+'</small><br><small style="color:var(--cyan);font-size:8px">github.com/'+x.r+'</small></div>'+
+        '<a class="secondary" style="padding:5px 10px;font-size:9px;text-decoration:none;white-space:nowrap" target="_blank" href="https://github.com/'+x.r+'">abrir ↗</a></div>';
+    }).join('');
+    return '<div style="margin-bottom:14px"><b style="font-size:12px;color:var(--cyan)">'+c+'</b><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:6px">'+cards+'</div></div>';
+  }).join('');
+  const grid=document.getElementById('extGrid');
+  if(grid)grid.innerHTML=bodyHtml||'<p style="color:var(--muted);font-size:11px">Nada encontrado.</p>';
+  const cnt=document.getElementById('extCount');if(cnt)cnt.textContent='('+total+' repositórios reais)';
+}
+
+function buildChatModelBar(){
+  const sel=$('modelSelect');if(!sel)return;
+  const groups={};
+  MODELS_CATALOG.forEach(x=>{(groups[x.p]=groups[x.p]||[]).push(x)});
+  let html='';
+  Object.keys(groups).forEach(p=>{
+    html+='<optgroup label="'+MODEL_PROVIDERS[p][0]+'">';
+    groups[p].forEach(x=>{html+='<option value="'+x.p+'|'+x.m+'">'+x.n+' · '+x.t+'</option>'});
+    html+='</optgroup>';
+  });
+  sel.innerHTML=html;
+  if(state.api&&state.api.provider&&state.api.model){
+    const v=state.api.provider+'|'+state.api.model;
+    if([...sel.options].some(o=>o.value===v))sel.value=v;
+    $('modelStatus').textContent=state.api.model;
+  }
+}
+function chatModelChanged(v){
+  const i=v.indexOf('|');
+  if(i<1)return;
+  useModel(v.slice(0,i),v.slice(i+1));
+}
+
+function updateAgentBrain(){
+  const el=$('agentBrainStatus');
+  if(el)el.innerHTML=apiReady()?'IA REAL · '+escapeHtml(state.api.model):'MODO LOCAL';
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nicolaswjwkwk.github.io/jarvis-hud-v2/sitemap.xml

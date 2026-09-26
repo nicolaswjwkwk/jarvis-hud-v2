@@ -1,0 +1,130 @@
+/* ==== v2.2 · limpeza visual (clean pass) — foco mobile ==================== */
+
+/* Cantos mais suaves e arredondados no mobile (menos "ficha técnica", mais app) */
+@media (max-width: 760px) {
+  body.hud-mobile { --radius: 14px; --radius-lg: 18px; }
+  body.hud-mobile .panel,
+  body.hud-mobile .hud__header,
+  body.hud-mobile .hud__footer,
+  body.hud-mobile .console,
+  body.hud-mobile .modal__box { border-radius: 18px !important; }
+  /* remove os cantos decorativos (colchetes) — poluição visual no celular */
+  body.hud-mobile .panel:before,
+  body.hud-mobile .panel:after { display: none; }
+  /* respiro extra dentro dos painéis */
+  body.hud-mobile .panel__head { padding: 14px 16px; }
+  body.hud-mobile .chips { padding: 4px 14px 16px; gap: 8px; }
+  body.hud-mobile .chip { padding: 9px 14px; font-size: 11.5px; border-radius: 14px; }
+  body.hud-mobile #chat { padding: 14px !important; }
+  body.hud-mobile .msg { margin-bottom: 14px; }
+  body.hud-mobile .msg__text { font-size: 14.5px; line-height: 1.55; }
+}
+
+/* Status do topo: 1 linha limpa no mobile, sem quebrar em 2 fileiras */
+@media (max-width: 760px) {
+  body.hud-mobile .header__status {
+    display: flex; flex-wrap: nowrap; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    gap: 6px; padding-bottom: 2px; mask-image: linear-gradient(90deg, #000 92%, transparent);
+  }
+  body.hud-mobile .header__status::-webkit-scrollbar { display: none; }
+  body.hud-mobile .header__status .pill { flex: 0 0 auto; padding: 7px 11px; border-radius: 999px; }
+  /* pills secundárias (sistema/rede/voz) ficam discretas — menos peso visual, ainda visíveis */
+  body.hud-mobile .header__status .pill--ghost {
+    background: transparent; border-color: rgba(140, 190, 220, .14); opacity: .82;
+  }
+  body.hud-mobile .hud__header { padding: 12px 14px; }
+  body.hud-mobile .brand__text strong { letter-spacing: .16em; }
+}
+
+/* Console de comando: mais arejado, menos "quadrado técnico" */
+@media (max-width: 760px) {
+  body.hud-mobile .console { gap: 10px; padding: 10px 12px; }
+  body.hud-mobile .console__field {
+    border-radius: 14px; background: rgba(10, 18, 26, .5);
+    border: 1px solid rgba(140, 190, 220, .18);
+  }
+  body.hud-mobile #input { padding: 4px 2px; }
+  body.hud-mobile .mic, body.hud-mobile .hud-attach { border-radius: 14px; }
+  body.hud-mobile #btn-send { border-radius: 14px; letter-spacing: .1em; }
+}
+
+/* Núcleo (orb) mais compacto no mobile — dá lugar ao chat, sem some */
+@media (max-width: 760px) {
+  body.hud-mobile .panel--core .panel__head + * { padding: 10px; }
+  body.hud-mobile #chart, body.hud-mobile canvas.orb { max-height: 220px; }
+}
+
+/* Modais e painel ADM: cantos suaves e mais espaço de leitura */
+@media (max-width: 760px) {
+  body.hud-mobile .modal__box { padding: 4px; }
+  body.hud-mobile .modal__head { padding: 16px 18px; }
+  body.hud-mobile .ctl__tabs button, body.hud-mobile .admin__tabs button,
+  body.hud-mobile [data-atab] { border-radius: 12px; padding: 10px 14px; }
+}
+
+/* Reduz o brilho/ruído decorativo geral no mobile — visual mais calmo */
+@media (max-width: 760px) {
+  body.hud-mobile .backdrop__grid,
+  body.hud-mobile .backdrop__scanline { opacity: .4; }
+  body.hud-mobile .panel { box-shadow: 0 10px 24px rgba(0, 0, 0, .4); }
+}
+
+/* ==== v2.3 · padronização dos elementos (tamanhos/posições consistentes) === */
+
+/* Botão de anexo do mesmo tamanho/forma dos demais controles do console */
+.hud-attach {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(var(--accent-rgb), .06); border-color: var(--line);
+}
+.hud-attach svg { width: 19px; height: 19px; }
+
+/* Chip de voz alinhado à altura dos outros controles, sem ficar "flutuando" pequeno */
+.hud-vchip {
+  height: 46px; padding: 0 14px; border-radius: 23px;
+  background: rgba(var(--accent-rgb), .06);
+}
+.hud-vchip svg { width: 16px; height: 16px; }
+
+/* No mobile, chip de voz cede o lugar ao ícone de voz da navegação inferior
+   (evita repetir o mesmo controle duas vezes na tela e poluir o console) */
+@media (max-width: 760px) {
+  body.hud-mobile .hud-vchip { display: none; }
+}
+
+/* Toasts nunca ficam escondidos por trás da navegação inferior */
+@media (max-width: 760px) {
+  body.hud-mobile .toasts {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    right: 12px; left: 12px; width: auto;
+  }
+}
+@media (min-width: 761px) {
+  .toasts { bottom: 20px; right: 20px; }
+}
+
+/* Banner de rede (offline) não sobrepõe o cabeçalho — empurra o conteúdo */
+.hud-netb:not([hidden]) ~ .hud, body:has(.hud-netb:not([hidden])) .hud { padding-top: 40px; }
+
+/* Consistência geral: todo botão circular de ação usa o mesmo tamanho base */
+.mic, .hud-attach, #hud-mnav-mic { box-sizing: border-box; }
+
+/* ==== v2.3b · manual do operador (modal de ajuda) adaptado ao celular ==== */
+@media (max-width: 760px) {
+  body.hud-mobile .modal { padding: 0; place-items: stretch; }
+  body.hud-mobile .modal__box {
+    width: 100%; max-width: 100%; height: 100%; max-height: 100%;
+    border-radius: 0; border: 0;
+  }
+  body.hud-mobile .modal__body {
+    grid-template-columns: 1fr !important; gap: 18px;
+    padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  body.hud-mobile .help__col h3 { font-size: 11.5px; margin-bottom: 13px; }
+  body.hud-mobile .keys li, body.hud-mobile .cmds li { padding: 10px 2px; font-size: 13.5px; }
+  body.hud-mobile .keys kbd {
+    min-width: 30px; padding: 5px 8px; font-size: 11px; border-radius: 8px;
+  }
+  body.hud-mobile .modal__head { padding: 14px 16px; }
+  body.hud-mobile .modal__head h2 { font-size: 13px; }
+}
