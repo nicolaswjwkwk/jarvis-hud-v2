@@ -786,6 +786,9 @@ button:active{transform:scale(.98)}
             </div></section>
             <section class="panel-box"><h3>Conta &amp; Privacidade</h3><div class="inner">
               <div class="setting-row"><div><b>Login com Google</b><small id="googleLoginHint">Entre pra sincronizar seu perfil real (fica salvo com sessão persistente).</small></div><button class="primary" id="googleLoginBtn" onclick="loginGoogle()">Entrar com Google</button></div>
+               <div class="setting-row"><div><b>Login Google direto (GIS)</b><small>ID do cliente OAuth (…apps.googleusercontent.com). Login sem precisar de backend.</small></div><input class="select" id="googleClientIdInput" placeholder="xxxx.apps.googleusercontent.com" style="max-width:170px" onchange="saveGrowthCfg()"></div>
+               <div class="setting-row"><div><b>Google Analytics 4</b><small>ID de medição (G-…). Rastreia visitas e uso do site em tempo real.</small></div><input class="select" id="gaIdInput" placeholder="G-XXXXXXXXXX" style="max-width:150px" onchange="saveGrowthCfg()"></div>
+               <div class="setting-row"><div><b>Google Ads</b><small>ID de conversão (AW-…) para campanhas e remarketing.</small></div><input class="select" id="adsIdInput" placeholder="AW-XXXXXXXXX" style="max-width:150px" onchange="saveGrowthCfg()"></div>
               <div class="setting-row"><div><b>Arquivos</b><small>Arquivos escolhidos são exibidos somente nesta interface.</small></div><span style="font-size:9px;color:#76e9b2">LOCAL</span></div>
               <div class="setting-row"><div><b>Microfone</b><small>O navegador pede permissão quando o reconhecimento de voz é ativado.</small></div><span style="font-size:9px;color:#76e9b2">BROWSER</span></div>
             </div></section>
@@ -930,6 +933,12 @@ async function saveApiConfig(){
   }catch(err){
     $('apiStatus').textContent='Salvo, mas o teste falhou: '+err.message.slice(0,60);
   }
+}
+function initGoogleIntegrations(){
+  const c = loadGrowthCfg();
+  const fill = (id, v) => { const el = $(id); if (el) el.value = v || ''; };
+  fill('googleClientIdInput', c.cid); fill('gaIdInput', c.ga); fill('adsIdInput', c.ads);
+  initGrowth(); initGoogleSignIn();
 }
 function updateAiStatus(){
   const pill=$('aiStatusText'),dot=$('aiStatusDot');
@@ -1320,6 +1329,7 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=$('installBtn');if(b)b.style.display=''});
 function installApp(){if(!deferredPrompt){toast('Instalação','Use o menu do navegador: "Adicionar à tela inicial" / "Instalar app".');return}deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;const b=$('installBtn');if(b)b.style.display='none'})}
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+addEventListener('load',()=>{try{initGoogleIntegrations()}catch(e){}});
 
 function addTyping(id){
   const wrap=document.createElement('div');
@@ -2092,9 +2102,63 @@ function updateProfileUI(){
     refreshBackendPreviews();
   }
 }
+/* ═══════════════ INTEGRAÇÕES GOOGLE: Analytics, Ads e Login direto (GIS) ═══════════════ */
+function loadGrowthCfg(){
+  return { ga: localStorage.getItem('jarvis_ga_id')||'', ads: localStorage.getItem('jarvis_ads_id')||'', cid: localStorage.getItem('jarvis_google_cid')||'' };
+}
+function saveGrowthCfg(){
+  const g=$('gaIdInput').value.trim(), a=$('adsIdInput').value.trim(), c=$('googleClientIdInput').value.trim();
+  g?localStorage.setItem('jarvis_ga_id',g):localStorage.removeItem('jarvis_ga_id');
+  a?localStorage.setItem('jarvis_ads_id',a):localStorage.removeItem('jarvis_ads_id');
+  c?localStorage.setItem('jarvis_google_cid',c):localStorage.removeItem('jarvis_google_cid');
+  initGrowth(); initGoogleSignIn();
+  toast('Google', 'Configurações salvas.');
+}
+function initGrowth(){
+  const { ga, ads } = loadGrowthCfg();
+  if ((!ga && !ads) || document.getElementById('gtagScript')) return;
+  const s = document.createElement('script');
+  s.id = 'gtagScript'; s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ga || ads);
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){ dataLayer.push(arguments); };
+  if (ga) gtag('config', ga, { page_path: location.pathname });
+  if (ads) gtag('config', ads);
+}
+function initGoogleSignIn(){
+  const { cid } = loadGrowthCfg();
+  if (!cid || document.getElementById('googleGisScript')) return;
+  const s = document.createElement('script');
+  s.id = 'googleGisScript'; s.async = true;
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = function(){
+    if (!window.google || !google.accounts) return;
+    google.accounts.id.initialize({
+      client_id: cid,
+      callback: async function(resp){
+        try{
+          const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(resp.credential));
+          if (!r.ok) throw new Error('token inválido');
+          const p = await r.json();
+          state.google = { session_token: 'gis', user: { name: p.name || p.email, email: p.email, picture: p.picture } };
+          localStorage.setItem('jarvis_google_session', JSON.stringify(state.google));
+          updateProfileUI();
+          toast('Login Google', 'Bem-vindo, ' + (p.name || p.email) + '!');
+        }catch(e){ toast('Login Google', 'Falha ao validar: ' + e.message); }
+      }
+    });
+    google.accounts.id.prompt();
+  };
+  document.head.appendChild(s);
+}
 async function loginGoogle(){
+  const { cid } = loadGrowthCfg();
   const base=jarvisBackendUrl();
-  if(!base){toast('Login Google','Configure o Backend do JARVIS em Configurações primeiro.');switchView('settings');return}
+  if(!base){
+    if(cid && window.google && google.accounts){ toast('Login Google','Use a janela do Google que abriu…'); google.accounts.id.prompt(); return }
+    toast('Login Google','Sem backend: preencha o ID do cliente OAuth nas configurações (login direto).'); switchView('settings'); return
+  }
   let url;
   try{
     const r=await fetch(base.replace(/\/+$/,'')+'/auth/google/start',{method:'POST'});
