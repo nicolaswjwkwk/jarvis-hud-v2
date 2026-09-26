@@ -20,8 +20,10 @@ from server.connectors import home_assistant, registry as connectors_registry
 from server.connectors.base44_superagent import SuperagentError, send_message as send_superagent_message
 from server.personality import build_system_prompt, get_personality, set_personality
 from server.security import SECURITY_HEADERS, RateLimitExceeded, check_rate_limit, client_key
+from server.skills.fun import router as skills_router
 
 app = FastAPI(title='JARVIS Backend', version='0.3.0')
+app.include_router(skills_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CONFIG.cors_origins(),

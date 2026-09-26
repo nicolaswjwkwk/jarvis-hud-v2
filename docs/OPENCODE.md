@@ -65,3 +65,20 @@ voz do navegador.
 - O repositório é público: **nunca** comite chaves. Use variáveis de ambiente.
 - `server/.env.example` lista todas as variáveis suportadas.
 - O plugin `jarvis-guard.js` impede o agente de ler `.env` e arquivos de credenciais.
+
+## Orquestrador no site (jarvis-x.html)
+
+O HUD tem agora um roteador real embutido:
+
+1. `routeOf(text)` classifica cada mensagem: CÓDIGO, RACIOCÍNIO, PESQUISA ou CONVERSA
+2. `routeModelFor` escolhe, dentro do provedor configurado, o modelo mais adequado
+   à rota (ex.: código → Qwen coder; raciocínio → DeepSeek R1/Nemotron)
+3. `orchestrationChain` monta a cadeia de custo: provedor ativo → OpenCode Zen
+   (grátis, sem chave)
+4. `callOrchestratedAI` executa com fallback automático em cascata, mostra o selo
+   da rota no status e avisa quando um fallback foi usado
+5. As regras do orquestrador (`ORCHESTRATOR_RULES`) entram no prompt de sistema em
+   cada envio, sem alterar a personalidade salva
+
+Habilidades do JARVIS-on-Messenger: `GET /api/skills` lista; `GET /api/skills/joke`
+(ou `fact`, `quote`, `motivation`) devolve um item aleatório.

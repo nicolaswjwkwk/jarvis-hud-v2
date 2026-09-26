@@ -937,6 +937,87 @@ function updateAiStatus(){
   if(apiReady()){pill.textContent=state.api.provider.toUpperCase()+' · '+state.api.model;dot.style.background='#65f6b0';dot.style.boxShadow='0 0 10px #65f6b0'}
   else{pill.textContent='MODO DEMO · toque para ativar';dot.style.background='#ffc76a';dot.style.boxShadow='0 0 10px #ffc76a'}
 }
+/* ═══════════════ ORQUESTRADOR UNIVERSAL — ROUTER DE TAREFAS (v3.1) ═══════════════ */
+const ORCHESTRATOR_RULES = `ORQUESTRADOR: siga o fluxo OBJETIVO → PLANEJAMENTO → DECOMPOSIÇÃO → SELEÇÃO → EXECUÇÃO → VERIFICAÇÃO → CORREÇÃO → RESULTADO. Escolha sempre a alternativa de menor custo que atenda à qualidade (gratuito > free tier > API barata > premium). Divida tarefas complexas em etapas, verifique o resultado antes de entregar e corrija erros automaticamente quando possível. Nunca exponha chaves, tokens ou senhas. Ações externas com consequências relevantes (enviar mensagens, compras, exclusões) exigem confirmação prévia do operador. Responda em português do Brasil, direto e organizado.`;
+
+const ROUTES = {
+  codigo: {
+    label: 'CÓDIGO',
+    re: /\b(c[oó]digo|script|fun[cç][aã]o|bug|erro|refator\w*|program\w*|javascript|python|html|css|sql|classe|m[ée]todo|compil\w*|test\w*|api|json|regex)\b/i,
+    pref: { groq:['qwen','gpt-oss'], openrouter:['coder','muse'], zen:['muse'], nvidia:['coder'], mistral:['codestral'], aiml:['ling'], mimo:['mimo'], ollama:['qwen'] }
+  },
+  raciocinio: {
+    label: 'RACIOCÍNIO',
+    re: /\b(analis\w*|expliqu\w*|por que|porqu[êe]|compar\w*|estrat[ée]g\w*|planej\w*|decid\w*|otimiz\w*|calcul\w*|prob\w*|resolver|prova|deriv\w*|sintetiz\w*|resum\w*)\b/i,
+    pref: { groq:['gpt-oss-120b'], openrouter:['r1','nemotron-3-ultra'], zen:['nemotron-3-ultra'], nvidia:['nemotron-3-ultra','nemotron'], mistral:['large'], cerebras:['70b'], aiml:['space-bunny'], mimo:['mimo'], ollama:['llama3.3'] }
+  },
+  pesquisa: {
+    label: 'PESQUISA',
+    re: /\b(pesquis\w*|busc\w*|not[ií]ci\w*|pre[cç]o|cota[cç][aã]o|clima|tempo|quem|onde|quando|atual\w*|hoje|mercado|d[oó]lar|cota\w*|mercado)\b/i,
+    pref: { groq:['gpt-oss-20b','qwen'], openrouter:['lightning','llama-3.3'], zen:['ling'], nvidia:['lightning','8b'], mistral:['nemo'], cerebras:['8b'], aiml:['ling'], mimo:['mimo'], ollama:['llama3.2'] }
+  },
+  conversa: {
+    label: 'CONVERSA',
+    re: /.*/,
+    pref: {}
+  }
+};
+
+function routeOf(text){
+  for (const k in ROUTES){ if (k!=='conversa' && ROUTES[k].re.test(text||'')) return k; }
+  return 'conversa';
+}
+
+function routeModelFor(provider, route){
+  const prefs = (ROUTES[route] && ROUTES[route].pref && ROUTES[route].pref[provider]) || [];
+  const models = API_MODELS[provider] || [];
+  for (const p of prefs){
+    const hit = models.find(m => String(m[0]).toLowerCase().includes(p));
+    if (hit) return hit[0];
+  }
+  return null;
+}
+
+function orchestrationChain(userText){
+  const route = routeOf(userText);
+  const chain = [];
+  const a = state.api;
+  if (apiReady()){
+    const m = routeModelFor(a.provider, route) || a.model;
+    chain.push({ provider: a.provider, key: a.key, model: m, url: a.url });
+  }
+  const zenModel = routeModelFor('zen', route) || (API_MODELS.zen && API_MODELS.zen[0] && API_MODELS.zen[0][0]);
+  if (zenModel && !chain.some(c => c.provider==='zen')) chain.push({ provider: 'zen', key: '', model: zenModel, url: '' });
+  return { route, chain };
+}
+
+function setRouteBadge(route, used){
+  const pill = $('aiStatusText');
+  if (pill && apiReady()) pill.textContent = ROUTES[route].label + ' · ' + used.model.split('/').pop();
+}
+
+async function callOrchestratedAI(userText, onStream){
+  const { route, chain } = orchestrationChain(userText);
+  if (!chain.length) return callRealAI(userText, onStream); // modo demo/local
+  const origApi = state.api, origSys = state.sys;
+  let lastErr = null;
+  for (let i = 0; i < chain.length; i++){
+    const c = chain[i];
+    state.api = { provider: c.provider, key: c.key, model: c.model, url: c.url };
+    state.sys = origSys ? origSys + '\n\n' + ORCHESTRATOR_RULES : ORCHESTRATOR_RULES;
+    try {
+      const reply = await callRealAI(userText, onStream);
+      state.api = origApi; state.sys = origSys;
+      if (i > 0) toast('Roteador', 'Fallback acionado: ' + c.provider + ' · ' + c.model);
+      setRouteBadge(route, c);
+      return reply;
+    } catch (e) {
+      lastErr = e; state.api = origApi; state.sys = origSys;
+    }
+  }
+  throw lastErr || new Error('todos os modelos falharam');
+}
+
 let AI_ABORT=null;
 function stopAI(){if(AI_ABORT)AI_ABORT.abort()}
 async function callRealAI(userText,onStream){
@@ -1153,7 +1234,7 @@ async function aiReply(text){
       const target=$('streamText');
       setGenerating(true);
       try{
-        const reply=await callRealAI(text,piece=>{if(target){target.textContent+=piece;scrollChat()}});
+        const reply=await callOrchestratedAI(text,piece=>{if(target){target.textContent+=piece;scrollChat()}});
         removeTyping(typingId);
         addMessage('ai',reply,Math.round(performance.now()-t0));
         if(state.autoVoice)speak(reply);
