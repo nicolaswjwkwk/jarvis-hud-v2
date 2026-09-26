@@ -1,47 +1,79 @@
 {
   "$schema": "https://opencode.ai/config.json",
-
   "autoupdate": true,
   "share": "disabled",
-
   "model": "groq/llama-3.3-70b-versatile",
   "small_model": "groq/llama-3.1-8b-instant",
-
-  "instructions": ["AGENTS.md", ".opencode/rules/jarvis.md"],
-
+  "instructions": [
+    "AGENTS.md",
+    ".opencode/rules/jarvis.md",
+    ".opencode/rules/router.md"
+  ],
   "agent": {
     "build": {
       "mode": "primary",
       "description": "Agente principal de desenvolvimento com acesso total a ferramentas",
-      "permission": { "edit": "allow", "bash": "allow", "webfetch": "allow" }
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "webfetch": "allow"
+      }
     },
     "plan": {
       "mode": "primary",
       "description": "Analisa código e sugere mudanças sem alterar arquivos",
-      "permission": { "edit": "deny", "bash": "ask" }
+      "permission": {
+        "edit": "deny",
+        "bash": "ask"
+      }
     },
     "review": {
       "mode": "subagent",
       "description": "Revisa código em busca de bugs, segurança e qualidade",
-      "permission": { "edit": "deny", "bash": "deny" }
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
     },
     "security": {
       "mode": "subagent",
       "description": "Auditoria de segurança: injeção, XSS, segredos expostos, permissões amplas",
-      "permission": { "edit": "deny", "bash": "deny" }
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
     },
     "docs": {
       "mode": "subagent",
       "description": "Gera e atualiza documentação Markdown do projeto",
-      "permission": { "edit": "allow", "bash": "deny" }
+      "permission": {
+        "edit": "allow",
+        "bash": "deny"
+      }
     },
     "commit": {
       "mode": "subagent",
       "description": "Escreve mensagens de commit convencionais e organiza o staging",
-      "permission": { "edit": "allow", "bash": "allow" }
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "orchestrator": {
+      "mode": "primary",
+      "description": "Orquestrador universal — decompõe tarefas complexas e coordena subagentes",
+      "prompt": "{file:./.opencode/agents/orchestrator.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": {
+          "*": "allow",
+          "rm -rf *": "ask",
+          "git push*": "ask"
+        },
+        "webfetch": "allow"
+      }
     }
   },
-
   "mcp": {
     "jarvis-hud": {
       "type": "remote",
@@ -49,7 +81,6 @@
       "enabled": false
     }
   },
-
   "permission": {
     "edit": "allow",
     "bash": {
@@ -59,9 +90,7 @@
     },
     "webfetch": "allow"
   },
-
   "provider": {
-
     "groq": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Groq",
@@ -70,16 +99,29 @@
         "apiKey": "{env:GROQ_API_KEY}"
       },
       "models": {
-        "llama-3.1-8b-instant": { "name": "Llama 3.1 8B Instant" },
-        "llama-3.3-70b-versatile": { "name": "Llama 3.3 70B Versatile" },
-        "meta-llama/llama-4-scout-17b-16e-instruct": { "name": "Llama 4 Scout 17B" },
-        "moonshotai/kimi-k2-instruct": { "name": "Kimi K2 Instruct" },
-        "qwen/qwen3-32b": { "name": "Qwen3 32B" },
-        "openai/gpt-oss-120b": { "name": "GPT-OSS 120B" },
-        "openai/gpt-oss-20b": { "name": "GPT-OSS 20B" }
+        "llama-3.1-8b-instant": {
+          "name": "Llama 3.1 8B Instant"
+        },
+        "llama-3.3-70b-versatile": {
+          "name": "Llama 3.3 70B Versatile"
+        },
+        "meta-llama/llama-4-scout-17b-16e-instruct": {
+          "name": "Llama 4 Scout 17B"
+        },
+        "moonshotai/kimi-k2-instruct": {
+          "name": "Kimi K2 Instruct"
+        },
+        "qwen/qwen3-32b": {
+          "name": "Qwen3 32B"
+        },
+        "openai/gpt-oss-120b": {
+          "name": "GPT-OSS 120B"
+        },
+        "openai/gpt-oss-20b": {
+          "name": "GPT-OSS 20B"
+        }
       }
     },
-
     "openrouter": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "OpenRouter (grátis)",
@@ -88,35 +130,86 @@
         "apiKey": "{env:OPENROUTER_API_KEY}"
       },
       "models": {
-        "deepseek/deepseek-r1:free": { "name": "DeepSeek R1 (free)" },
-        "deepseek/deepseek-chat-v3-0324:free": { "name": "DeepSeek V3 (free)" },
-        "meta-llama/llama-3.3-70b-instruct:free": { "name": "Llama 3.3 70B (free)" },
-        "meta-llama/llama-3.1-8b-instruct": { "name": "Llama 3.1 8B" },
-        "meta-llama/llama-3.2-3b-instruct": { "name": "Llama 3.2 3B" },
-        "qwen/qwen3-coder:free": { "name": "Qwen3 Coder (free)" },
-        "qwen/qwen3-235b-a22b:free": { "name": "Qwen3 235B A22B (free)" },
-        "qwen/qwen-2.5-coder-32b-instruct": { "name": "Qwen2.5 Coder 32B" },
-        "qwen/qwen-2.5-72b-instruct": { "name": "Qwen2.5 72B" },
-        "mistralai/mistral-nemo:free": { "name": "Mistral Nemo (free)" },
-        "mistralai/mistral-7b-instruct": { "name": "Mistral 7B" },
-        "mistralai/mixtral-8x7b-instruct": { "name": "Mixtral 8x7B" },
-        "google/gemma-3-27b-it:free": { "name": "Gemma 3 27B (free)" },
-        "google/gemma-2-9b-it:free": { "name": "Gemma 2 9B (free)" },
-        "microsoft/phi-4": { "name": "Phi-4" },
-        "microsoft/phi-3.5-mini-instruct": { "name": "Phi-3.5 Mini" },
-        "nvidia/nemotron-3-ultra-550b-a55b:free": { "name": "Nemotron 3 Ultra (free)" },
-        "nvidia/nemotron-3.5-lightning:free": { "name": "Nemotron 3.5 Lightning (free)" },
-        "cohere/command-r-v01": { "name": "Command R" },
-        "01-ai/yi-1.5-34b-chat": { "name": "Yi 1.5 34B" },
-        "internlm/internlm2_5-20b-chat": { "name": "InternLM 2.5 20B" },
-        "z-ai/glm-4.6": { "name": "GLM-4.6" },
-        "openbmb/minicpm-3-4b": { "name": "MiniCPM 3 4B" },
-        "bigcode/starcoder2-15b-instruct": { "name": "StarCoder2 15B" },
-        "codellama/codellama-70b-instruct": { "name": "Code Llama 70B" },
-        "openai/gpt-oss-120b:free": { "name": "GPT-OSS 120B (free)" }
+        "deepseek/deepseek-r1:free": {
+          "name": "DeepSeek R1 (free)"
+        },
+        "deepseek/deepseek-chat-v3-0324:free": {
+          "name": "DeepSeek V3 (free)"
+        },
+        "meta-llama/llama-3.3-70b-instruct:free": {
+          "name": "Llama 3.3 70B (free)"
+        },
+        "meta-llama/llama-3.1-8b-instruct": {
+          "name": "Llama 3.1 8B"
+        },
+        "meta-llama/llama-3.2-3b-instruct": {
+          "name": "Llama 3.2 3B"
+        },
+        "qwen/qwen3-coder:free": {
+          "name": "Qwen3 Coder (free)"
+        },
+        "qwen/qwen3-235b-a22b:free": {
+          "name": "Qwen3 235B A22B (free)"
+        },
+        "qwen/qwen-2.5-coder-32b-instruct": {
+          "name": "Qwen2.5 Coder 32B"
+        },
+        "qwen/qwen-2.5-72b-instruct": {
+          "name": "Qwen2.5 72B"
+        },
+        "mistralai/mistral-nemo:free": {
+          "name": "Mistral Nemo (free)"
+        },
+        "mistralai/mistral-7b-instruct": {
+          "name": "Mistral 7B"
+        },
+        "mistralai/mixtral-8x7b-instruct": {
+          "name": "Mixtral 8x7B"
+        },
+        "google/gemma-3-27b-it:free": {
+          "name": "Gemma 3 27B (free)"
+        },
+        "google/gemma-2-9b-it:free": {
+          "name": "Gemma 2 9B (free)"
+        },
+        "microsoft/phi-4": {
+          "name": "Phi-4"
+        },
+        "microsoft/phi-3.5-mini-instruct": {
+          "name": "Phi-3.5 Mini"
+        },
+        "nvidia/nemotron-3-ultra-550b-a55b:free": {
+          "name": "Nemotron 3 Ultra (free)"
+        },
+        "nvidia/nemotron-3.5-lightning:free": {
+          "name": "Nemotron 3.5 Lightning (free)"
+        },
+        "cohere/command-r-v01": {
+          "name": "Command R"
+        },
+        "01-ai/yi-1.5-34b-chat": {
+          "name": "Yi 1.5 34B"
+        },
+        "internlm/internlm2_5-20b-chat": {
+          "name": "InternLM 2.5 20B"
+        },
+        "z-ai/glm-4.6": {
+          "name": "GLM-4.6"
+        },
+        "openbmb/minicpm-3-4b": {
+          "name": "MiniCPM 3 4B"
+        },
+        "bigcode/starcoder2-15b-instruct": {
+          "name": "StarCoder2 15B"
+        },
+        "codellama/codellama-70b-instruct": {
+          "name": "Code Llama 70B"
+        },
+        "openai/gpt-oss-120b:free": {
+          "name": "GPT-OSS 120B (free)"
+        }
       }
     },
-
     "cerebras": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Cerebras",
@@ -125,14 +218,23 @@
         "apiKey": "{env:CEREBRAS_API_KEY}"
       },
       "models": {
-        "llama-3.3-70b": { "name": "Llama 3.3 70B" },
-        "llama3.1-8b": { "name": "Llama 3.1 8B" },
-        "gpt-oss-120b": { "name": "GPT-OSS 120B" },
-        "qwen-3-32b": { "name": "Qwen3 32B" },
-        "qwen-3-235b-a22b-instruct-2507": { "name": "Qwen3 235B" }
+        "llama-3.3-70b": {
+          "name": "Llama 3.3 70B"
+        },
+        "llama3.1-8b": {
+          "name": "Llama 3.1 8B"
+        },
+        "gpt-oss-120b": {
+          "name": "GPT-OSS 120B"
+        },
+        "qwen-3-32b": {
+          "name": "Qwen3 32B"
+        },
+        "qwen-3-235b-a22b-instruct-2507": {
+          "name": "Qwen3 235B"
+        }
       }
     },
-
     "google-ai": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Google Gemini",
@@ -141,13 +243,20 @@
         "apiKey": "{env:GEMINI_API_KEY}"
       },
       "models": {
-        "gemini-2.5-pro": { "name": "Gemini 2.5 Pro" },
-        "gemini-2.5-flash": { "name": "Gemini 2.5 Flash" },
-        "gemini-2.0-flash": { "name": "Gemini 2.0 Flash" },
-        "gemma-3-27b-it": { "name": "Gemma 3 27B" }
+        "gemini-2.5-pro": {
+          "name": "Gemini 2.5 Pro"
+        },
+        "gemini-2.5-flash": {
+          "name": "Gemini 2.5 Flash"
+        },
+        "gemini-2.0-flash": {
+          "name": "Gemini 2.0 Flash"
+        },
+        "gemma-3-27b-it": {
+          "name": "Gemma 3 27B"
+        }
       }
     },
-
     "github-models": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "GitHub Models",
@@ -156,15 +265,26 @@
         "apiKey": "{env:GITHUB_TOKEN}"
       },
       "models": {
-        "openai/gpt-4o-mini": { "name": "GPT-4o mini" },
-        "meta/Llama-3.3-70B-Instruct": { "name": "Llama 3.3 70B" },
-        "meta/Llama-3.1-8B-Instruct": { "name": "Llama 3.1 8B" },
-        "mistral-ai/Mistral-Small-3.1": { "name": "Mistral Small 3.1" },
-        "microsoft/Phi-4": { "name": "Phi-4" },
-        "deepseek/DeepSeek-V3-0324": { "name": "DeepSeek V3" }
+        "openai/gpt-4o-mini": {
+          "name": "GPT-4o mini"
+        },
+        "meta/Llama-3.3-70B-Instruct": {
+          "name": "Llama 3.3 70B"
+        },
+        "meta/Llama-3.1-8B-Instruct": {
+          "name": "Llama 3.1 8B"
+        },
+        "mistral-ai/Mistral-Small-3.1": {
+          "name": "Mistral Small 3.1"
+        },
+        "microsoft/Phi-4": {
+          "name": "Phi-4"
+        },
+        "deepseek/DeepSeek-V3-0324": {
+          "name": "DeepSeek V3"
+        }
       }
     },
-
     "huggingface": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Hugging Face Inference",
@@ -173,18 +293,35 @@
         "apiKey": "{env:HUGGINGFACE_API_KEY}"
       },
       "models": {
-        "meta-llama/Llama-3.3-70B-Instruct": { "name": "Llama 3.3 70B" },
-        "Qwen/Qwen2.5-72B-Instruct": { "name": "Qwen2.5 72B" },
-        "Qwen/Qwen2.5-Coder-32B-Instruct": { "name": "Qwen2.5 Coder 32B" },
-        "deepseek-ai/DeepSeek-R1": { "name": "DeepSeek R1" },
-        "deepseek-ai/DeepSeek-V3": { "name": "DeepSeek V3" },
-        "mistralai/Mistral-7B-Instruct-v0.3": { "name": "Mistral 7B v0.3" },
-        "google/gemma-3-27b-it": { "name": "Gemma 3 27B" },
-        "microsoft/phi-4": { "name": "Phi-4" },
-        "bigcode/starcoder2-15b-instruct": { "name": "StarCoder2 15B" }
+        "meta-llama/Llama-3.3-70B-Instruct": {
+          "name": "Llama 3.3 70B"
+        },
+        "Qwen/Qwen2.5-72B-Instruct": {
+          "name": "Qwen2.5 72B"
+        },
+        "Qwen/Qwen2.5-Coder-32B-Instruct": {
+          "name": "Qwen2.5 Coder 32B"
+        },
+        "deepseek-ai/DeepSeek-R1": {
+          "name": "DeepSeek R1"
+        },
+        "deepseek-ai/DeepSeek-V3": {
+          "name": "DeepSeek V3"
+        },
+        "mistralai/Mistral-7B-Instruct-v0.3": {
+          "name": "Mistral 7B v0.3"
+        },
+        "google/gemma-3-27b-it": {
+          "name": "Gemma 3 27B"
+        },
+        "microsoft/phi-4": {
+          "name": "Phi-4"
+        },
+        "bigcode/starcoder2-15b-instruct": {
+          "name": "StarCoder2 15B"
+        }
       }
     },
-
     "mistral": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Mistral AI",
@@ -193,15 +330,26 @@
         "apiKey": "{env:MISTRAL_API_KEY}"
       },
       "models": {
-        "mistral-small-latest": { "name": "Mistral Small" },
-        "mistral-large-latest": { "name": "Mistral Large" },
-        "open-mistral-nemo": { "name": "Mistral Nemo" },
-        "codestral-latest": { "name": "Codestral" },
-        "mixtral-8x7b-32768": { "name": "Mixtral 8x7B" },
-        "magistral-small-latest": { "name": "Magistral Small" }
+        "mistral-small-latest": {
+          "name": "Mistral Small"
+        },
+        "mistral-large-latest": {
+          "name": "Mistral Large"
+        },
+        "open-mistral-nemo": {
+          "name": "Mistral Nemo"
+        },
+        "codestral-latest": {
+          "name": "Codestral"
+        },
+        "mixtral-8x7b-32768": {
+          "name": "Mixtral 8x7B"
+        },
+        "magistral-small-latest": {
+          "name": "Magistral Small"
+        }
       }
     },
-
     "sambanova": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "SambaNova",
@@ -210,14 +358,23 @@
         "apiKey": "{env:SAMBANOVA_API_KEY}"
       },
       "models": {
-        "Meta-Llama-3.3-70B-Instruct": { "name": "Llama 3.3 70B" },
-        "Meta-Llama-3.1-8B-Instruct": { "name": "Llama 3.1 8B" },
-        "Qwen2.5-72B-Instruct": { "name": "Qwen2.5 72B" },
-        "DeepSeek-R1-Distill-70B": { "name": "DeepSeek R1 Distill 70B" },
-        "Mistral-7B-Instruct-v0.3": { "name": "Mistral 7B" }
+        "Meta-Llama-3.3-70B-Instruct": {
+          "name": "Llama 3.3 70B"
+        },
+        "Meta-Llama-3.1-8B-Instruct": {
+          "name": "Llama 3.1 8B"
+        },
+        "Qwen2.5-72B-Instruct": {
+          "name": "Qwen2.5 72B"
+        },
+        "DeepSeek-R1-Distill-70B": {
+          "name": "DeepSeek R1 Distill 70B"
+        },
+        "Mistral-7B-Instruct-v0.3": {
+          "name": "Mistral 7B"
+        }
       }
     },
-
     "siliconflow": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "SiliconFlow",
@@ -226,18 +383,35 @@
         "apiKey": "{env:SILICONFLOW_API_KEY}"
       },
       "models": {
-        "deepseek-ai/DeepSeek-V3": { "name": "DeepSeek V3" },
-        "deepseek-ai/DeepSeek-R1": { "name": "DeepSeek R1" },
-        "Qwen/Qwen2.5-72B-Instruct": { "name": "Qwen2.5 72B" },
-        "Qwen/Qwen2.5-Coder-32B-Instruct": { "name": "Qwen2.5 Coder 32B" },
-        "THUDM/GLM-4-9B-Chat": { "name": "GLM-4 9B" },
-        "01-ai/Yi-1.5-9B-Chat": { "name": "Yi 1.5 9B" },
-        "internlm/internlm2_5-20b-chat": { "name": "InternLM 2.5 20B" },
-        "meta-llama/Meta-Llama-3.1-8B-Instruct": { "name": "Llama 3.1 8B" },
-        "mistralai/Mistral-7B-Instruct-v0.3": { "name": "Mistral 7B" }
+        "deepseek-ai/DeepSeek-V3": {
+          "name": "DeepSeek V3"
+        },
+        "deepseek-ai/DeepSeek-R1": {
+          "name": "DeepSeek R1"
+        },
+        "Qwen/Qwen2.5-72B-Instruct": {
+          "name": "Qwen2.5 72B"
+        },
+        "Qwen/Qwen2.5-Coder-32B-Instruct": {
+          "name": "Qwen2.5 Coder 32B"
+        },
+        "THUDM/GLM-4-9B-Chat": {
+          "name": "GLM-4 9B"
+        },
+        "01-ai/Yi-1.5-9B-Chat": {
+          "name": "Yi 1.5 9B"
+        },
+        "internlm/internlm2_5-20b-chat": {
+          "name": "InternLM 2.5 20B"
+        },
+        "meta-llama/Meta-Llama-3.1-8B-Instruct": {
+          "name": "Llama 3.1 8B"
+        },
+        "mistralai/Mistral-7B-Instruct-v0.3": {
+          "name": "Mistral 7B"
+        }
       }
     },
-
     "nvidia-nim": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "NVIDIA NIM",
@@ -246,17 +420,32 @@
         "apiKey": "{env:NVIDIA_NIM_API_KEY}"
       },
       "models": {
-        "meta/llama-3.3-70b-instruct": { "name": "Llama 3.3 70B" },
-        "meta/llama-3.1-8b-instruct": { "name": "Llama 3.1 8B" },
-        "deepseek-ai/deepseek-r1": { "name": "DeepSeek R1" },
-        "qwen/qwen2.5-coder-32b-instruct": { "name": "Qwen2.5 Coder 32B" },
-        "qwen/qwen2.5-72b-instruct": { "name": "Qwen2.5 72B" },
-        "nvidia/llama-3.1-nemotron-70b-instruct": { "name": "Nemotron 70B" },
-        "nvidia/llama-3.3-nemotron-super-49b-v1.5": { "name": "Nemotron Super 49B" },
-        "nvidia/nemotron-ultra-253b-v1": { "name": "Nemotron Ultra 253B" }
+        "meta/llama-3.3-70b-instruct": {
+          "name": "Llama 3.3 70B"
+        },
+        "meta/llama-3.1-8b-instruct": {
+          "name": "Llama 3.1 8B"
+        },
+        "deepseek-ai/deepseek-r1": {
+          "name": "DeepSeek R1"
+        },
+        "qwen/qwen2.5-coder-32b-instruct": {
+          "name": "Qwen2.5 Coder 32B"
+        },
+        "qwen/qwen2.5-72b-instruct": {
+          "name": "Qwen2.5 72B"
+        },
+        "nvidia/llama-3.1-nemotron-70b-instruct": {
+          "name": "Nemotron 70B"
+        },
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5": {
+          "name": "Nemotron Super 49B"
+        },
+        "nvidia/nemotron-ultra-253b-v1": {
+          "name": "Nemotron Ultra 253B"
+        }
       }
     },
-
     "deepseek": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "DeepSeek",
@@ -265,12 +454,17 @@
         "apiKey": "{env:DEEPSEEK_API_KEY}"
       },
       "models": {
-        "deepseek-chat": { "name": "DeepSeek V3 (Chat)" },
-        "deepseek-reasoner": { "name": "DeepSeek R1 (Reasoner)" },
-        "deepseek-coder": { "name": "DeepSeek Coder" }
+        "deepseek-chat": {
+          "name": "DeepSeek V3 (Chat)"
+        },
+        "deepseek-reasoner": {
+          "name": "DeepSeek R1 (Reasoner)"
+        },
+        "deepseek-coder": {
+          "name": "DeepSeek Coder"
+        }
       }
     },
-
     "cohere": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Cohere",
@@ -279,13 +473,20 @@
         "apiKey": "{env:COHERE_API_KEY}"
       },
       "models": {
-        "command-r-plus": { "name": "Command R Plus" },
-        "command-r": { "name": "Command R" },
-        "command-a-03-2025": { "name": "Command A" },
-        "aya-expanse-32b": { "name": "Aya Expanse 32B" }
+        "command-r-plus": {
+          "name": "Command R Plus"
+        },
+        "command-r": {
+          "name": "Command R"
+        },
+        "command-a-03-2025": {
+          "name": "Command A"
+        },
+        "aya-expanse-32b": {
+          "name": "Aya Expanse 32B"
+        }
       }
     },
-
     "zhipu": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Zhipu GLM",
@@ -294,13 +495,20 @@
         "apiKey": "{env:ZHIPU_API_KEY}"
       },
       "models": {
-        "glm-4-plus": { "name": "GLM-4 Plus" },
-        "glm-4-flash": { "name": "GLM-4 Flash (grátis)" },
-        "glm-4.5": { "name": "GLM-4.5" },
-        "glm-4-air": { "name": "GLM-4 Air" }
+        "glm-4-plus": {
+          "name": "GLM-4 Plus"
+        },
+        "glm-4-flash": {
+          "name": "GLM-4 Flash (grátis)"
+        },
+        "glm-4.5": {
+          "name": "GLM-4.5"
+        },
+        "glm-4-air": {
+          "name": "GLM-4 Air"
+        }
       }
     },
-
     "qwen-dashscope": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Alibaba Qwen (DashScope)",
@@ -309,13 +517,20 @@
         "apiKey": "{env:QWEN_API_KEY}"
       },
       "models": {
-        "qwen3-max": { "name": "Qwen3 Max" },
-        "qwen3-coder-plus": { "name": "Qwen3 Coder Plus" },
-        "qwen2.5-72b-instruct": { "name": "Qwen2.5 72B" },
-        "qwen2.5-coder-32b-instruct": { "name": "Qwen2.5 Coder 32B" }
+        "qwen3-max": {
+          "name": "Qwen3 Max"
+        },
+        "qwen3-coder-plus": {
+          "name": "Qwen3 Coder Plus"
+        },
+        "qwen2.5-72b-instruct": {
+          "name": "Qwen2.5 72B"
+        },
+        "qwen2.5-coder-32b-instruct": {
+          "name": "Qwen2.5 Coder 32B"
+        }
       }
     },
-
     "meta-llama": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Meta Llama API",
@@ -324,12 +539,17 @@
         "apiKey": "{env:LLAMA_API_KEY}"
       },
       "models": {
-        "Llama-4-Maverick-17B-128E-Instruct-FP8": { "name": "Llama 4 Maverick" },
-        "Llama-4-Scout-17B-16E-Instruct": { "name": "Llama 4 Scout" },
-        "Llama-3.3-70B-Instruct": { "name": "Llama 3.3 70B" }
+        "Llama-4-Maverick-17B-128E-Instruct-FP8": {
+          "name": "Llama 4 Maverick"
+        },
+        "Llama-4-Scout-17B-16E-Instruct": {
+          "name": "Llama 4 Scout"
+        },
+        "Llama-3.3-70B-Instruct": {
+          "name": "Llama 3.3 70B"
+        }
       }
     },
-
     "cloudflare": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Cloudflare Workers AI",
@@ -338,14 +558,23 @@
         "apiKey": "{env:CLOUDFLARE_API_KEY}"
       },
       "models": {
-        "@cf/meta/llama-3.3-70b-instruct-fp8-fast": { "name": "Llama 3.3 70B Fast" },
-        "@cf/meta/llama-3.1-8b-instruct": { "name": "Llama 3.1 8B" },
-        "@cf/qwen/qwen2.5-coder-32b-instruct": { "name": "Qwen2.5 Coder 32B" },
-        "@cf/mistralai/mistral-7b-instruct-v0.3": { "name": "Mistral 7B" },
-        "@cf/google/gemma-3-12b-it": { "name": "Gemma 3 12B" }
+        "@cf/meta/llama-3.3-70b-instruct-fp8-fast": {
+          "name": "Llama 3.3 70B Fast"
+        },
+        "@cf/meta/llama-3.1-8b-instruct": {
+          "name": "Llama 3.1 8B"
+        },
+        "@cf/qwen/qwen2.5-coder-32b-instruct": {
+          "name": "Qwen2.5 Coder 32B"
+        },
+        "@cf/mistralai/mistral-7b-instruct-v0.3": {
+          "name": "Mistral 7B"
+        },
+        "@cf/google/gemma-3-12b-it": {
+          "name": "Gemma 3 12B"
+        }
       }
     },
-
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
@@ -354,26 +583,66 @@
         "apiKey": "ollama"
       },
       "models": {
-        "llama3.3": { "name": "Llama 3.3 70B" },
-        "llama3.2": { "name": "Llama 3.2" },
-        "llama3.1": { "name": "Llama 3.1" },
-        "qwen3": { "name": "Qwen3" },
-        "qwen2.5": { "name": "Qwen2.5" },
-        "qwen2.5-coder": { "name": "Qwen2.5 Coder" },
-        "deepseek-r1": { "name": "DeepSeek R1" },
-        "mistral": { "name": "Mistral 7B" },
-        "mixtral": { "name": "Mixtral" },
-        "gemma3": { "name": "Gemma 3" },
-        "gemma2": { "name": "Gemma 2" },
-        "phi4": { "name": "Phi-4" },
-        "phi3": { "name": "Phi-3" },
-        "codellama": { "name": "Code Llama" },
-        "starcoder2": { "name": "StarCoder2" },
-        "glm4": { "name": "GLM-4" },
-        "yi": { "name": "Yi" },
-        "internlm2": { "name": "InternLM 2" },
-        "minicpm": { "name": "MiniCPM" },
-        "gpt-oss": { "name": "GPT-OSS" }
+        "llama3.3": {
+          "name": "Llama 3.3 70B"
+        },
+        "llama3.2": {
+          "name": "Llama 3.2"
+        },
+        "llama3.1": {
+          "name": "Llama 3.1"
+        },
+        "qwen3": {
+          "name": "Qwen3"
+        },
+        "qwen2.5": {
+          "name": "Qwen2.5"
+        },
+        "qwen2.5-coder": {
+          "name": "Qwen2.5 Coder"
+        },
+        "deepseek-r1": {
+          "name": "DeepSeek R1"
+        },
+        "mistral": {
+          "name": "Mistral 7B"
+        },
+        "mixtral": {
+          "name": "Mixtral"
+        },
+        "gemma3": {
+          "name": "Gemma 3"
+        },
+        "gemma2": {
+          "name": "Gemma 2"
+        },
+        "phi4": {
+          "name": "Phi-4"
+        },
+        "phi3": {
+          "name": "Phi-3"
+        },
+        "codellama": {
+          "name": "Code Llama"
+        },
+        "starcoder2": {
+          "name": "StarCoder2"
+        },
+        "glm4": {
+          "name": "GLM-4"
+        },
+        "yi": {
+          "name": "Yi"
+        },
+        "internlm2": {
+          "name": "InternLM 2"
+        },
+        "minicpm": {
+          "name": "MiniCPM"
+        },
+        "gpt-oss": {
+          "name": "GPT-OSS"
+        }
       }
     }
   }
